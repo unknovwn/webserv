@@ -1,12 +1,12 @@
 #include <sys/socket.h>
 #include <sys/select.h>
-#include <sys/errno.h>
 #include <cstring>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 
 #define BUFFER_SIZE 1024
 #define PORT 8080
@@ -44,15 +44,13 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
 		select_ret = select(max_sd + 1, &rfds, NULL, NULL, NULL);
 		if (select_ret == -1) {
 			std::cerr << "Select error" << std::endl;
-			std::cerr << std::strerror(errno) << std::endl;
-			continue;
+			exit(EXIT_FAILURE);
 		}
 
 		if (FD_ISSET(sockfd, &rfds)) {
 			connected_sock = accept(sockfd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
 			if (connected_sock == -1) {
 				std::cerr << "Accept error" << std::endl;
-				std::cerr << std::strerror(errno) << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
@@ -69,7 +67,6 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
 				count = recv(client_sock[i], buffer, BUFFER_SIZE, 0);
 				if (count == -1) {
 					std::cerr << "Recv error" << std::endl;
-					std::cerr << std::strerror(errno) << std::endl;
 					exit(EXIT_FAILURE);
 				}
 				if (count < 3) {
@@ -83,11 +80,13 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
 					ss.clear();
 					body.str("");
 					body.clear();
-					body << "<html><head><title>WEBSERV</title></head><body style=\"font-size: 40px\">";
-					body << "Hello from server!";
-					body << "</body></html>";
+					std::ifstream default_page("default_pages/default.html");
+					if (default_page) {
+						body << default_page;
+						default_page.close();
+					}
 					ss << "HTTP/1.1 200 OK" << std::endl;
-					ss << "Content-Type: text/html" << std::endl;
+					ss << "Content-Type: text/plain" << std::endl;
 					ss << "Content-Length: " << body.str().length() << std::endl;
 					ss << std::endl;
 					ss << body.str();
@@ -107,28 +106,23 @@ int main() {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1) {
 		std::cerr << "Cannot create socket" << std::endl;
-		std::cerr << std::strerror(errno) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
 		std::cerr << "Setsockopt error" << std::endl;
-		std::cerr << std::strerror(errno) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	address.sin_family = AF_INET;
-	/* address.sin_addr.s_addr = inet_addr("127.0.0.1"); */
-	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_addr.s_addr = inet_addr("127.0.0.1");
 	address.sin_port = htons(PORT);
 
 	if (bind(sockfd, (struct sockaddr*)&address, addrlen) == -1) {
 		std::cerr << "Bind error" << std::endl;
-		std::cerr << std::strerror(errno) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	if (listen(sockfd, MAX_CLIENTS) == -1) {
 		std::cerr << "Listen error" << std::endl;
-		std::cerr << std::strerror(errno) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	recieve(sockfd, address, addrlen);
