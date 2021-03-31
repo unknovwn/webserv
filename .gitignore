@@ -33,3 +33,5 @@
 
 # Clion
 .idea
+
+src/location/CMakeLists.txt
