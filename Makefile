@@ -7,7 +7,7 @@ INCLD        = include/
 
 
 CC           = clang++
-CFLAGS       = -Wall -Wextra -Werror -I$(INCLD)
+CFLAGS       = -Wall -Wextra -Werror -std=c++2a -I$(INCLD)
 DEBUG_FLAGS  = -g
 
 OBJ          = $(SRC:.cpp=.o)
