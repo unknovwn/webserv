@@ -35,4 +35,3 @@
 .idea
 
 src/location/CMakeLists.txt
-cmake-build-debug/*
