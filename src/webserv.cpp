@@ -84,11 +84,11 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
           body.clear();
           std::ifstream default_page("default_pages/default.html");
           if (default_page) {
-            body << default_page;
+            body << default_page.rdbuf();
             default_page.close();
           }
           ss << "HTTP/1.1 200 OK" << std::endl;
-          ss << "Content-Type: text/plain" << std::endl;
+          ss << "Content-Type: text/html" << std::endl;
           ss << "Content-Length: " << body.str().length() << std::endl;
           ss << std::endl;
           ss << body.str();
