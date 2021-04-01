@@ -17,7 +17,7 @@ void location::SetAutoindex(bool autoindex) {
 const http_method& location::GetMethods(size_t id) const {
   return methods_[id];
 }
-void location::SetMethods (const std::vector<http_method> &methods) {
+void location::SetMethods(const std::vector<http_method> &methods) {
   methods_ = methods;
 }
 

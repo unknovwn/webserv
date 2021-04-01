@@ -34,8 +34,8 @@ class location {
   void                            SetRoot(const std::string &root);
 
   const std::string&              GetIndex(size_t id) const;
-  void                            SetIndex(
-  	                                const std::vector<std::string> &index);
+  void                            SetIndex
+                                    (const std::vector<std::string> &index);
 
   size_t                          GetMaxSize() const;
   void                            SetMaxSize(const size_t new_size);
