@@ -12,26 +12,31 @@ typedef enum {
 } http_method;
 
 class location {
-  std::string               uri_;
-  std::string               root_;
-  std::vector<std::string>  index_;
-  bool                      autoindex_;
-  std::vector<http_method>  methods_;
-  size_t                    max_body_size_;
+  std::string                     uri_;
+  std::string                     root_;
+  std::vector<std::string>        index_;
+  bool                            autoindex_;
+  std::vector<http_method>        methods_;
+  size_t                          max_body_size_;
 
  public:
   const std::string&              GetUri() const;
   void                            SetUri(const std::string &uri);
+
   bool                            GetAutoindex() const;
   void                            SetAutoindex(bool autoindex);
-  const std::vector<http_method>& GetMethods() const;
+
+  const http_method&              GetMethods(size_t id) const;
   void                            SetMethods(const std::vector<http_method>
                                     &methods);
+
   const std::string&              GetRoot() const;
   void                            SetRoot(const std::string &root);
-  const std::vector<std::string>& GetIndex() const;
+
+  const std::string&              GetIndex(size_t id) const;
   void                            SetIndex(
   	                                const std::vector<std::string> &index);
+
   size_t                          GetMaxSize() const;
   void                            SetMaxSize(const size_t new_size);
 };
