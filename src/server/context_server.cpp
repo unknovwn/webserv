@@ -21,13 +21,6 @@ void server::SetErrorPages(const std::string &error_pages) {
   error_pages_ = error_pages;
 }
 
-const std::string &server::GetIpAdress() const {
-  return ip_adress_;
-}
-void server::SetIpAdress(const std::string &ip_adress) {
-  ip_adress_ = ip_adress;
-}
-
 const std::string &server::GetServName() const {
   return serv_name_;
 }

@@ -8,7 +8,6 @@ class server {
   std::string             host_;
   int                     port_;
   std::string             error_pages_;
-  std::string             ip_adress_;
   std::string             serv_name_;
   std::vector<location>   routes_;
  public:
@@ -18,8 +17,6 @@ class server {
   void                    SetPort(int port);
   const std::string&      GetErrorPages() const;
   void                    SetErrorPages(const std::string &error_pages);
-  const std::string&      GetIpAdress() const;
-  void                    SetIpAdress(const std::string &ip_adress);
   const std::string&      GetServName() const;
   void                    SetServName(const std::string &serv_name);
   const location&         GetRoutes(size_t id) const;

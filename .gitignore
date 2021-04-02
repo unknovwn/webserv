@@ -36,3 +36,4 @@
 
 src/location/CMakeLists.txt
 cmake-build-debug/
+server/main.cpp
