@@ -1,0 +1,15 @@
+{
+  # Comment
+  listen host:80 default;
+  server_name    domain1.com www.domain1.com;
+
+  root /var/html;
+
+  location / {
+	autoindex on;
+  }
+}
+
+{
+  listen host:80;root /var/html;
+}
