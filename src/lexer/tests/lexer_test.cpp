@@ -120,7 +120,7 @@ void eof_tokens(std::istringstream& visualization) {
 }
 
 TEST(CoutTest, HandeOperator) {
-  std::string        file_name("../base_config.webserv");
+  std::string        file_name("base_config.webserv");
   auto               lex = new Lexer(file_name);
   std::istringstream visualization(lex->VisualizeToString());
   std::string        word;
