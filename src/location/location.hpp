@@ -14,13 +14,13 @@ typedef enum {
 } http_method;
 
 class Location {
-  string                     uri_;
-  string                     root_;
-  std::vector<string>        index_;
+  string                          uri_;
+  string                          root_;
+  std::vector<string>             index_;
   bool                            autoindex_;
   std::vector<http_method>        methods_; //allowed methods
   size_t                          max_body_size_;
-  string                     upload_dir_;
+  string                          upload_dir_;
 
  public:
   Location()                                  = default;
