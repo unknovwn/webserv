@@ -1,5 +1,12 @@
 #include "server.hpp"
 
+Server &Server::operator=(Server &other) {
+  listen_       = other.listen_;
+  server_name_  = other.server_name_;
+  routes_       = other.routes_;
+  error_pages_  = other.error_pages_;
+  return (*this);
+}
 //=============================== HOST =========================================
 const std::string &Server::GetHost() const {
   return this->host_;
@@ -11,8 +18,8 @@ void Server::SetHost(const std::string &host) {
 const string &Server::GetListen() const {
   return this->listen_;
 }
-void Server::SetListen(const string &listen) {
-  listen_ = listen;
+void Server::SetListen(const std::string &listen) {
+  this->listen_ = listen;
 }
 //=============================== ERROR PAGES ==================================
 std::map<int, string> &Server::GetErrorPages() {

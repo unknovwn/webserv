@@ -14,6 +14,8 @@ class Server {
   std::vector<Location>         routes_;
   std::map<int, string>         error_pages_;
  public:
+  Server& operator=(Server &other);
+
   const string &                GetListen() const;
   void                          SetListen(const string &listen);
   const string&                 GetServName() const;

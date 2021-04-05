@@ -7,7 +7,7 @@
 using string = std::string;
 
 class Request{
-  string                 ip_port; // при подключении задаем
+  string                 ip_port_; // при подключении задаем
   string                 method_;
   string                 path_;
   string                 protocol_;
