@@ -33,7 +33,7 @@ const string &Request::Find_GetH_Name(const string &key) const {
 }
 const string &Request::Find_GetH_Opt(const string &key) const {
   auto it = headers_.find(key);
-  if (it == headers_.end())
+  if (it == headers_.end())®
 	throw Request::Exception();
   return (*it).second;
 }

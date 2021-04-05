@@ -8,7 +8,7 @@ Server::Server()
 const string &Server::GetListen() const {
   return this->listen_;
 }
-void Server::SetListen(const std::string &listen) {
+void Server::SetListen(const string &listen) {
   this->listen_ = listen;
 }
 //=============================== ERROR PAGES ==================================
@@ -28,10 +28,10 @@ void Server::SetErrorPage(int error_val, string &error_file) {
   error_pages_.insert(std::pair<int, string>(error_val, error_file));
 }
 //=============================== SERV NAME ====================================
-const std::string &Server::GetServName() const {
+const string &Server::GetServName() const {
   return this->server_name_;
 }
-void Server::SetServName(const std::string &serv_name) {
+void Server::SetServName(const string &serv_name) {
   this->server_name_ = serv_name;
 }
 //============================== Location ======================================
