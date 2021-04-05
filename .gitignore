@@ -35,3 +35,7 @@
 .idea
 
 .DS_Store
+
+src/location/CMakeLists.txt
+cmake-build-debug/
+server/main.cpp
