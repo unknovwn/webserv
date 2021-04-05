@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-using std::string = string;
+using string = std::string;
 
 typedef enum {
   GET,
