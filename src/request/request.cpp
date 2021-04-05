@@ -28,23 +28,30 @@ std::map<string, string> &Request::GetHeaders() {
 const string &Request::Find_GetH_Name(const string &key) const {
    auto it = headers_.find(key);
    if (it == headers_.end())
-     return NULL;
+     throw Request::Exception();
   return (*it).first;
 }
 const string &Request::Find_GetH_Opt(const string &key) const {
   auto it = headers_.find(key);
   if (it == headers_.end())
-	return NULL;
+	throw Request::Exception();
   return (*it).second;
 }
 void Request::SetHeader(const string &name, const string &option) {
-  headers_.insert(std::pair<string, string>(name, option));
+  auto it = headers_.find(name);
+  if (it == headers_.end())
+    headers_.insert(std::pair<string, string>(name, option));
+  else if ((*it).first == name)
+    (*it).second = option;
 }
-
 //============================== IP_PORT =======================================
 const string &Request::GetIpPort() const {
   return ip_port_;
 }
 void Request::SetIpPort(const string &ip_port) {
   Request::ip_port_ = ip_port;
+}
+//========================== EXCEPTION =========================================
+const char *Request::Exception::what() const throw() {
+  return ("Request Exception\n");
 }

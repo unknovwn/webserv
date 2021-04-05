@@ -21,6 +21,11 @@ class Location {
   std::string                     upload_dir_;
 
  public:
+  Location()                                  = default;
+  Location& operator=(const Location &other)  = default;
+  Location(const Location &other)             = default;
+  ~Location()                                 = default;
+
   const std::string&              GetUri() const;
   void                            SetUri(const std::string &uri);
   const std::string&              GetRoot() const;
@@ -35,7 +40,13 @@ class Location {
                                     &methods);
   size_t                          GetMaxSize() const;
   void                            SetMaxSize(const size_t new_size);
-
   const std::string&              GetUploadDir() const;
   void                            SetUploadDir(const std::string &upload_dir);
+
+  class Exception: public std::exception { // пока не нужно, оставлю
+   public:
+	virtual const char* what() const throw();
+  };
+
+  bool operator==(const Location &other) const;
 };//end of class

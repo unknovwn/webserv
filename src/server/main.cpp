@@ -22,8 +22,8 @@ int   main()
 
   create_servs(servers_);
 
-  request.SetIpPort("192.168.8.1:70");
-  request.SetHeader("Host", "pornhub.org");
+  request.SetIpPort("192.168.8.1:80");
+  request.SetHeader("Host", "pornhub.net");
   matched_serv = choose_serv(request, servers_);
 
   if (matched_serv == NULL)

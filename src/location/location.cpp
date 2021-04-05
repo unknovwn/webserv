@@ -49,3 +49,19 @@ const std::string &Location::GetUploadDir() const {
 void Location::SetUploadDir(const std::string &upload_dir) {
   upload_dir_ = upload_dir;
 }
+//========================== EXCEPTION =========================================
+const char *Location::Exception::what() const throw() {
+  return ("Location context Exception\n");
+}
+//=========================== '==' =============================================
+bool Location::operator==(const Location &other) const {
+  return (
+  	Location::uri_ == other.uri_ &&
+  	Location::root_ == other.root_ &&
+  	Location::index_ == other.index_ &&
+  	Location::autoindex_ == other.autoindex_ &&
+  	Location::methods_ == other.methods_ &&
+  	Location::max_body_size_ == other.max_body_size_ &&
+  	Location::upload_dir_ == other.upload_dir_
+  	);
+}

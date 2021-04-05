@@ -13,8 +13,10 @@ class Request{
   string                 protocol_;
   map__                  headers_;
  public:
-  Request()              {}
-  ~Request()             {}
+  Request()                                 = default;
+  Request& operator=(const Request &other)  = default;
+  Request(const Request &other)             = default;
+  ~Request()                                = default;
 
   const string&          GetMethod() const;
   void                   SetMethod(const string &method);
@@ -29,5 +31,9 @@ class Request{
   const string&          GetIpPort() const;
   void                   SetIpPort(const string &ip_port);
 
+  class Exception: public std::exception {
+   public:
+    virtual const char* what() const throw();
+  };
 //  void                   SetHeaders(const map__ &headers);
 };
