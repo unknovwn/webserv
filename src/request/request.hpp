@@ -7,11 +7,12 @@
 using string = std::string;
 
 class Request{
-  string                 ip_port_; // при подключении задаем
+  string                 ip_port_;   // при подключении задаем
   string                 method_;
   string                 path_;
   string                 protocol_;
   map__                  headers_;
+
  public:
   Request()                                 = default;
   Request& operator=(const Request &other)  = default;
@@ -24,10 +25,10 @@ class Request{
   void                   SetPath(const string &path);
   const string&          GetAProtocol() const;
   void                   SetAProtocol(const string &a_protocol);
-  map__&                 GetHeaders(); // доступ к мапе ( на всякий случай)
-  const string&          Find_GetH_Name(const string &name) const; //Найди и получи имя конкретного хэдэра
-  const string&          Find_GetH_Opt(const string &option) const; // Найди и получи оптион конкретного хэдэра
-  void                   SetHeader(const string &name, const string &option); // добавь хэдэр напрямую
+  map__&                 GetHeaders();   // доступ к мапе ( на всякий случай)
+  const string&          Find_GetH_Name(const string &name) const;
+  const string&          Find_GetH_Opt(const string &option) const;
+  void                   SetHeader(const string &name, const string &option);
   const string&          GetIpPort() const;
   void                   SetIpPort(const string &ip_port);
 
@@ -35,5 +36,5 @@ class Request{
    public:
     virtual const char* what() const throw();
   };
-//  void                   SetHeaders(const map__ &headers);
+//   void                   SetHeaders(const map__ &headers);
 };

@@ -18,7 +18,7 @@ class Location {
   string                          root_;
   std::vector<string>             index_;
   bool                            autoindex_;
-  std::vector<http_method>        methods_; //allowed methods
+  std::vector<http_method>        methods_;   // allowed methods
   size_t                          max_body_size_;
   string                          upload_dir_;
 
@@ -34,7 +34,7 @@ class Location {
   void                            SetRoot(const string &root);
   const string&                   GetIndex(size_t id) const;
   void                            SetIndex
-	                                 (const std::vector<string> &index);
+                                   (const std::vector<string> &index);
   bool                            GetAutoindex() const;
   void                            SetAutoindex(bool autoindex);
   const http_method&              GetMethods(size_t id) const;
@@ -45,10 +45,10 @@ class Location {
   const string&                   GetUploadDir() const;
   void                            SetUploadDir(const string &upload_dir);
 
-  class Exception: public std::exception { // пока не нужно, оставлю
+  class Exception: public std::exception {   // пока не нужно, оставлю
    public:
-	virtual const char* what() const throw();
+    virtual const char* what() const throw();
   };
 
   bool operator==(const Location &other) const;
-};//end of class
+};   // end of class

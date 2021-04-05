@@ -28,9 +28,10 @@ class Server {
   void                          AddLocation(const Location &new_loc);
   string                        GetErrorPage(int error_val);
   void                          SetErrorPage(int error_val, string &error_file);
-//  std::map<int, string>&      qGetErrorPages();  // если заданы то подтягиваем файлы, елси нет - генерим свои
+// std::map<int, string>&      qGetErrorPages();
+// если заданы то подтягиваем файлы, елси нет - генерим свои
   class Exception: public std::exception {
    public:
-	virtual const char* what() const throw();
+    virtual const char* what() const throw();
   };
 };

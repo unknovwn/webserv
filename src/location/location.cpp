@@ -56,12 +56,11 @@ const char *Location::Exception::what() const throw() {
 //=========================== '==' =============================================
 bool Location::operator==(const Location &other) const {
   return (
-  	Location::uri_ == other.uri_ &&
-  	Location::root_ == other.root_ &&
-  	Location::index_ == other.index_ &&
-  	Location::autoindex_ == other.autoindex_ &&
-  	Location::methods_ == other.methods_ &&
-  	Location::max_body_size_ == other.max_body_size_ &&
-  	Location::upload_dir_ == other.upload_dir_
-  	);
+  Location::uri_ == other.uri_ &&
+  Location::root_ == other.root_ &&
+  Location::index_ == other.index_ &&
+  Location::autoindex_ == other.autoindex_ &&
+  Location::methods_ == other.methods_ &&
+  Location::max_body_size_ == other.max_body_size_ &&
+  Location::upload_dir_ == other.upload_dir_);
 }

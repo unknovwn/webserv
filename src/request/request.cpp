@@ -1,4 +1,5 @@
 #include "request.hpp"
+#include <utility>
 
 //============================== METHOD ========================================
 const string &Request::GetMethod() const {
@@ -26,15 +27,15 @@ std::map<string, string> &Request::GetHeaders() {
   return headers_;
 }
 const string &Request::Find_GetH_Name(const string &key) const {
-   auto it = headers_.find(key);
-   if (it == headers_.end())
-     throw Request::Exception();
+  auto it = headers_.find(key);
+  if (it == headers_.end())
+    throw Request::Exception();
   return (*it).first;
 }
 const string &Request::Find_GetH_Opt(const string &key) const {
   auto it = headers_.find(key);
-  if (it == headers_.end())®
-	throw Request::Exception();
+  if (it == headers_.end())
+    throw Request::Exception();
   return (*it).second;
 }
 void Request::SetHeader(const string &name, const string &option) {

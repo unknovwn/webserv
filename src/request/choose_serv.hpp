@@ -2,12 +2,13 @@
 
 #include "../server/server.hpp"
 #include "../request/request.hpp"
+#include <vector>
 
 Server *choose_serv(Request &request, std::vector<Server> &servers) {
   std::vector <Server*> friendly;
   size_t num_of_matches = 0;
 
-  for(auto &cur : servers) {
+  for (auto &cur : servers) {
     if (request.GetIpPort() == cur.GetListen()) {
       ++num_of_matches;
       friendly.push_back(&cur);

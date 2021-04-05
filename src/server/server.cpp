@@ -1,8 +1,9 @@
 #include "server.hpp"
+#include <utility>
 
 Server::Server()
-	:listen_("127.0.0.1:80"), server_name_("intra42.fr"),
-	routes_(),error_pages_()
+  :listen_("127.0.0.1:80"), server_name_("intra42.fr"),
+  routes_(), error_pages_()
 {}
 //=============================== LISTEN =======================================
 const string &Server::GetListen() const {
@@ -12,7 +13,7 @@ void Server::SetListen(const string &listen) {
   this->listen_ = listen;
 }
 //=============================== ERROR PAGES ==================================
-//std::map<int, string> &Server::GetErrorPages() {
+//  std::map<int, string> &Server::GetErrorPages() {
 //  return this->error_pages_;
 //}
 string Server::GetErrorPage(int error_val) {
@@ -46,11 +47,11 @@ const Location* Server::GetLocation(const string &uri) const {
 
   for (const auto &x : routes_) {
     if (uri.starts_with(x.GetUri())) {
-	  depth = std::count(x.GetUri().begin(), x.GetUri().end(), '/');
-	  if (depth > max_depth) {
-	    max_depth = depth;
-	    best_match = &x;
-	  }
+      depth = std::count(x.GetUri().begin(), x.GetUri().end(), '/');
+      if (depth > max_depth) {
+        max_depth = depth;
+        best_match = &x;
+      }
     }
   }
   return best_match;
