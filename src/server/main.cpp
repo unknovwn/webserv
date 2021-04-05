@@ -1,22 +1,20 @@
-#include "context_server.hpp"
+#include "server.hpp"
+#include "../request/choose_serv.hpp"
+
 
 int main()
 {
-  server                server_1; // содержит vector location-ов
+  Server *matched_serv;
+  std::vector<Server> servers_(4);
 
-  location location_1; // один из location-ов
+  servers_[0].SetListen("192.168.8.1:80");
+  servers_[0].SetListen("192.168.8.1:70");
+  servers_[1].SetListen("192.168.8.1:80");
+  servers_[2].SetListen("192.168.8.1:80");
 
-      std::vector<std::string> index_files; // вектор индексов внутри location
-
-      index_files.emplace_back("index.php"); // index 1
-      index_files.emplace_back("index.html"); // index 2
-
-  location_1.SetIndex(index_files); // установили в location
-
-  std::vector<location> location_vec(1, location_1); // vector location
-  server_1.SetRoutes(location_vec);
-
-  std::cout << server_1.GetRoutes(0).GetIndex(0) << std::endl;
-
+  Request request;
+  request.SetIpPort("192.168.1:70");
+  request.SetHeader("Host", "pornhub.com");
+  choose_serv(request, servers_);
   return 0;
 }

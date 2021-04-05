@@ -11,12 +11,12 @@ typedef enum {
   PUT
 } http_method;
 
-class location {
+class Location {
   std::string                     uri_;
   std::string                     root_;
   std::vector<std::string>        index_;
   bool                            autoindex_;
-  std::vector<http_method>        methods_;
+  std::vector<http_method>        methods_; //allowed methods
   size_t                          max_body_size_;
   std::string                     upload_dir_;
 

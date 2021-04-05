@@ -25,6 +25,26 @@ void Request::SetAProtocol(const std::string &a_protocol) {
 std::map<std::string, std::string> &Request::GetHeaders() {
   return headers_;
 }
-//void Request::SetHeaders(const std::map<std::string, std::string> &headers) {
-//  headers_ = headers;
-//}
+const std::string &Request::Find_GetH_Name(const std::string &name) const {
+   auto it = headers_.find(name);
+   if (it == headers_.end())
+     return NULL;
+  return (*it).first;
+}
+const string &Request::Find_GetH_Opt(const string &option) const {
+  auto it = headers_.find(option);
+  if (it == headers_.end())
+	return NULL;
+  return (*it).second;
+}
+void Request::SetHeader(const string &name, const string &option) {
+  headers_.insert(std::pair<string, string>(name, option));
+}
+
+//============================== IP_PORT =======================================
+const string &Request::GetIpPort() const {
+  return ip_port;
+}
+void Request::SetIpPort(const string &ip_port) {
+  Request::ip_port = ip_port;
+}
