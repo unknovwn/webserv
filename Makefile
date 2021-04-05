@@ -35,7 +35,7 @@ re: fclean all
 
 
 lint:
-	cpplint --quiet --filter=-legal/copyright --recursive .
+	cpplint --quiet --filter=-legal/copyright,-runtime/ --recursive .
 
 
 .PHONY: all clean fclean debug lint re
