@@ -18,6 +18,7 @@ enum class TokenType {
 class Token {
  public:
   // Constructors, Destructor, operator '=' -----------------------------------
+  Token();
   explicit Token(const TokenType& type, const size_t& line_nb = 0);
 
   Token(

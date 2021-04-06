@@ -1,25 +1,26 @@
 #pragma once
 
-#include <except>
+#include <exception>
 #include <vector>
 #include <map>
 #include <string>
+#include "server.hpp"
+#include "location.hpp"
+#include "token.hpp"
 
 class ConfigParser {
-  ConfigParser() {}
+  ConfigParser();
 
-  typedef void (*serverDirectiveHandler)(Server&);
-  typedef void (*localDirectiveHandler)(Location&);
-
-  const std::map<std::string, directiveHandler>
+  std::map<std::string, void (ConfigParser::*)(Server&)>
     kServerDirectiveHandlers;
-  const std::map<std::string, directiveHandler>
+  std::map<std::string, void (ConfigParser::*)(Location&)>
     kLocationDirectiveHandlers;
-  const std::vector<str::string> kHTTPMethods;
+
+  static const std::vector<std::string> kHTTPMethods;
 
   std::vector<Token>::const_iterator tokensIt_;
   Token                              currToken_;
-  const char*                        kFileName_;
+  std::string                        kFileName_;
 
   void NextToken();
   void Expect(TokenType type);
@@ -42,53 +43,59 @@ class ConfigParser {
   void RootHandler(Location& location);
   void SaveDirectoryHandler(Location& location);
 
+ public:
+  class ConfigSyntaxError {
+    const std::string file_;
+    int               line_;
+
+   protected:
+    ConfigSyntaxError(const std::string& file, int line);
+   public:
+    const std::string GetFile() const;
+    int         GetLine() const;
+    virtual const std::string what() const throw() = 0;
+  };
+
+ public:
   class UnexpectedToken: public ConfigSyntaxError {
-    const char* tokenName_;
+    const std::string tokenName_;
 
    public:
-    UnexpectedToken(const char* tokenName, const char* file, int line);
-    const char* what() const throw() override;
+    UnexpectedToken(const std::string& tokenName,
+        const std::string& file, int line);
+    const std::string what() const throw() override;
   };
 
   class UnknownDirective: public ConfigSyntaxError {
-    const char* directiveName_;
+    const std::string directiveName_;
 
    public:
-    UnknownDirective(const char* directiveName, const char* file, int line);
-    const char* what() const throw() override;
+    UnknownDirective(const std::string& directiveName,
+        const std::string& file, int line);
+    const std::string what() const throw() override;
   };
 
   class ExpectedSeparator: public ConfigSyntaxError {
    public:
-    ExpectedSeparator(const char* file, int line);
-    const char* what() const throw() override;
+    ExpectedSeparator(const std::string& file, int line);
+    const std::string what() const throw() override;
   };
 
   class InvalidArgument: public ConfigSyntaxError {
-    const char* argument_;
+    const std::string argument_;
 
    public:
-    InvalidArgument(const char* argument, const char* file, int line);
-    const char* what() const throw() override;
+    InvalidArgument(const std::string& argument,
+        const std::string& file, int line);
+    const std::string what() const throw() override;
   };
 
  public:
-  class ConfigSyntaxError: public std::exception {
-    const char* file_;
-    int         line_;
-
-   protected:
-    ConfigSyntaxError(const char file, int line);
-   public:
-    const char* GetFile() const;
-    int         GetLine() const;
-    const char* what() const throw() = 0;
-  };
-
   ConfigParser(const ConfigParser&)   = delete;
   void operator=(const ConfigParser&) = delete;
-  ~ConfigParser();
+  ~ConfigParser() = default;
 
   static ConfigParser& GetInstance();
-  std::vector<Server>  ParseConfig(const std::vector<Token>& tokens);
+  std::vector<Server>  ParseConfig(const std::string& fileName,
+      const std::vector<Token>& tokens);
 };

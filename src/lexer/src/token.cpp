@@ -8,6 +8,8 @@
 
 // Constructors, destructor ----------------------------------------------------
 
+Token::Token() {}
+
 Token::Token(const TokenType& type, const size_t& line_nb)
 : type_(type), value_(), line_nb_(line_nb)
 {}

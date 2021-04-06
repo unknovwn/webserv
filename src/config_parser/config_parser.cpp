@@ -1,80 +1,92 @@
-#include <ostringstream>
+#include <sstream>
 #include <algorithm>
 #include "config_parser.hpp"
+#include "token.hpp"
 #include "utils_string.hpp"
 
+const std::vector<std::string> ConfigParser::kHTTPMethods = {
+  "GET",
+  "HEAD",
+  "PUT",
+  "POST"
+};
+
 ConfigParser::ConfigParser() {
-  kServerDirectiveHandlers = {
-    { "listen", &ConfigParser::ListenHandler },
-    { "server_name", &ConfigParser::ServerNameHandler },
-    { "max_body_size", &ConfigParser::MaxBodySizeHandler },
-    { "location", &ConfigParser::LocationHandler }
-  };
+  kServerDirectiveHandlers["listen"]
+    = &ConfigParser::ListenHandler;
+  kServerDirectiveHandlers["server_name"]
+    = &ConfigParser::ServerNameHandler;
+  kServerDirectiveHandlers["max_body_size"]
+    = &ConfigParser::MaxBodySizeHandler;
+  kServerDirectiveHandlers["location"]
+    = &ConfigParser::LocationHandler;
 
-  kLocationDirectiveHandlers = {
-    { "allowed_methods", &ConfigParser::AllowedMethodsHandler },
-    { "autoindex", &ConfigParser::AutoindexHandler },
-    { "index", &ConfigParser::IndexHandler },
-    { "root", &ConfigParser::RootHandler },
-    { "save_directory", &ConfigParser::SaveDirectoryHandler }
-  };
-
-  kHTTPMethods = { "GET", "HEAD", "PUT", "POST" };
+  kLocationDirectiveHandlers["allowed_methods"]
+    = &ConfigParser::AllowedMethodsHandler;
+  kLocationDirectiveHandlers["autoindex"]
+    = &ConfigParser::AllowedMethodsHandler;
+  kLocationDirectiveHandlers["index"]
+    = &ConfigParser::IndexHandler;
+  kLocationDirectiveHandlers["root"]
+    = &ConfigParser::RootHandler;
+  kLocationDirectiveHandlers["save_directory"]
+    = &ConfigParser::SaveDirectoryHandler;
 }
 
-static ConfigParser& ConfigParser::GetInstance() {
+ConfigParser& ConfigParser::GetInstance() {
   static ConfigParser instance;
 
   return instance;
 }
 
-std::vector<Server> ConfigParser::ParseConfig(const char* fileName,
+std::vector<Server> ConfigParser::ParseConfig(const std::string& fileName,
     const std::vector<Token>& tokens) {
   std::vector<Server> servers;
 
   tokensIt_ = tokens.begin();
-  currToken_ = *tokensIt;
-  fileName_ = fileName;
+  currToken_ = *tokensIt_;
+  kFileName_ = fileName;
 
   ParseRoot(servers);
+  return servers;
 }
 
 
 void ConfigParser::NextToken() {
   ++tokensIt_;
-  curToken_ = *tokensIt_;
+  currToken_ = *tokensIt_;
 }
 
 void ConfigParser::Expect(TokenType type) {
   if (currToken_.get_type() != type) {
-    if (type == kSeparator) {
-      throw ExpectedSeparator(kFileName_, currToken_.get_line());
+    if (type == TokenType::kSeparator) {
+      throw ExpectedSeparator(kFileName_, currToken_.get_line_nb());
     }
-    throw UnexpectedToken(currToken_.get_value().c_str(), kFileName_,
-        currToken_.get_line());
+    throw UnexpectedToken(currToken_.get_value(), kFileName_,
+        currToken_.get_line_nb());
   }
 }
 
 void ConfigParser::ParseRoot(std::vector<Server>& servers) {
-  while (currToken_.get_type() != kEof) {
-    Expect(kOpenBlock);
+  while (currToken_.get_type() != TokenType::kEof) {
+    Expect(TokenType::kOpenBlock);
     NextToken();
     ParseServer(servers.emplace_back(Server()));
   }
 }
 
 void ConfigParser::ParseServer(Server& server) {
-  while (currToken_.get_type() != kCloseBlock) {
-    Expect(kDirective);
-    ParseServerDirective();
+  while (currToken_.get_type() != TokenType::kCloseBlock) {
+    Expect(TokenType::kDirective);
+    ParseServerDirective(server);
     NextToken();
   }
 }
 
 void ConfigParser::ParseLocation(Location& location) {
-  while (currToken_.get_type() != kCloseBlock) {
-    Expect(kDirective);
-    ParseLocationDirective();
+  while (currToken_.get_type() != TokenType::kCloseBlock) {
+    Expect(TokenType::kDirective);
+    ParseLocationDirective(location);
     NextToken();
   }
 }
@@ -83,15 +95,16 @@ void ConfigParser::ParseServerDirective(Server& server) {
   auto handlerIt = kServerDirectiveHandlers.find(currToken_.get_value());
 
   if (handlerIt == kServerDirectiveHandlers.end()) {
-    throw UnknownDirective(currToken_.get_value().c_str(), kFileName_,
-        currToken_.get_line());
+    throw UnknownDirective(currToken_.get_value(), kFileName_,
+        currToken_.get_line_nb());
   }
 
   NextToken();
-  (*handlerIt).second(server);
+  auto handler = (*handlerIt).second;
+  (this->*handler)(server);
   NextToken();
   if ((*handlerIt).first != "location") {
-    Expect(kSeparator);
+    Expect(TokenType::kSeparator);
   }
 }
 
@@ -99,15 +112,16 @@ void ConfigParser::ParseLocationDirective(Location& location) {
   auto handlerIt = kLocationDirectiveHandlers.find(currToken_.get_value());
 
   if (handlerIt == kLocationDirectiveHandlers.end()) {
-    throw UnknownDirective(currToken_.get_value().c_str(), kFileName_,
-        currToken_.get_line());
+    throw UnknownDirective(currToken_.get_value(), kFileName_,
+        currToken_.get_line_nb());
   }
 
   NextToken();
-  Expect(kArgument);
-  (*handlerIt).second(location);
+  Expect(TokenType::kArgument);
+  auto handler = (*handlerIt).second;
+  (this->*handler)(location);
   NextToken();
-  Expect(kSeparator);
+  Expect(TokenType::kSeparator);
 }
 
 
@@ -120,7 +134,7 @@ void ConfigParser::ListenHandler(Server& server) {
   auto colonCount = std::count(address.begin(), address.end(), ':');
 
   if (colonCount > 1) {
-    throw InvalidArgument(address.c_str(), kFileName_, currToken_.get_line());
+    throw InvalidArgument(address, kFileName_, currToken_.get_line_nb());
   }
 
   if (colonCount == 1) {
@@ -137,7 +151,7 @@ void ConfigParser::ListenHandler(Server& server) {
     }
   }
   if (port == -1) {
-    throw InvalidArgument(address.c_str(), kFileName_, currToken_.get_line());
+    throw InvalidArgument(address, kFileName_, currToken_.get_line_nb());
   }
   listen << host << ":" << port;
   server.SetListen(listen.str());
@@ -151,7 +165,7 @@ int ConfigParser::ParsePort(const std::string& port) {
   }
   try {
     result = std::stoi(port);
-    if (portValue < 1 || portValue > 65535) {
+    if (result < 1 || result > 65535) {
       return -1;
     }
     return result;
@@ -162,36 +176,36 @@ int ConfigParser::ParsePort(const std::string& port) {
 }
 
 void ConfigParser::ServerNameHandler(Server& server) {
-  server.setServerName(currToken_.get_value());
+  server.SetServName(currToken_.get_value());
 }
 
 void ConfigParser::MaxBodySizeHandler(Server& server) {
   auto arg = currToken_.get_value();
   if (!(contains_only_digits(arg))) {
-    throw InvalidArgument(arg.c_str(), kFileName_, currToken_.get_line());
+    throw InvalidArgument(arg, kFileName_, currToken_.get_line_nb());
   }
-  server.setMaxBodySize(std::stoi(arg));
+  server.SetMaxBodySize(std::stoi(arg));
 }
 
 void ConfigParser::LocationHandler(Server& server) {
   Location location;
-  location.setUri(currToken_.get_value());
+  location.SetUri(currToken_.get_value());
   NextToken();
-  Expect(kOpenBlock);
+  Expect(TokenType::kOpenBlock);
   NextToken();
   ParseLocation(location);
 
-  server.AddLocation(location)
+  server.AddLocation(location);
 }
 
 
 void ConfigParser::AllowedMethodsHandler(Location& location) {
-  while (currToken_.get_type() == kArgument) {
+  while (currToken_.get_type() == TokenType::kArgument) {
     auto method = currToken_.get_value();
     if (std::find(kHTTPMethods.begin(), kHTTPMethods.end(), method)
         == kHTTPMethods.end()) {
-      throw InvalidArgument(method.c_str(), kFileName_,
-          currToken_.get_line());
+      throw InvalidArgument(method, kFileName_,
+          currToken_.get_line_nb());
     }
     location.AddMethod(method);
     NextToken();
@@ -205,13 +219,13 @@ void ConfigParser::AutoindexHandler(Location& location) {
   } else if (state == "off") {
     location.SetAutoindex(false);
   } else {
-    throw InvalidArgument(state.c_str(), kFileName_,
-        currToken_.get_line());
+    throw InvalidArgument(state, kFileName_,
+        currToken_.get_line_nb());
   }
 }
 
 void ConfigParser::IndexHandler(Location& location) {
-  while (currToken_.get_type() == kArgument) {
+  while (currToken_.get_type() == TokenType::kArgument) {
     location.AddIndex(currToken_.get_value());
     NextToken();
   }
@@ -221,17 +235,15 @@ void ConfigParser::RootHandler(Location& location) {
   location.SetRoot(currToken_.get_value());
 }
 
-void SaveDirectoryHandler() {
+void ConfigParser::SaveDirectoryHandler(Location& location) {
   location.SetUploadDir(currToken_.get_value());
 }
 
 
-ConfigParser::ConfigSyntaxError::ConfigSyntaxError(const char* file, int line) {
-  file_ = file;
-  line_ = line;
-}
+ConfigParser::ConfigSyntaxError::ConfigSyntaxError(const std::string& file, int line)
+  : file_(file), line_(line) {}
 
-const char* ConfigParser::ConfigSyntaxError::GetFile() const {
+const std::string ConfigParser::ConfigSyntaxError::GetFile() const {
   return file_;
 }
 
@@ -239,48 +251,45 @@ int ConfigParser::ConfigSyntaxError::GetLine() const {
   return line_;
 }
 
-ConfigParser::UnexpectedToken::UnexpectedToken(const char* tokenName,
-    const char* file, int line) : ConfigSyntaxError(file, line) {
-  tokenName_ = tokenName;
-}
+ConfigParser::UnexpectedToken::UnexpectedToken(const std::string& tokenName,
+    const std::string& file, int line)
+  : ConfigSyntaxError(file, line), tokenName_(tokenName) {}
 
-const char* ConfigParser::UnexpectedToken::what() const throw() {
+const std::string ConfigParser::UnexpectedToken::what() const throw() {
   std::ostringstream message;
 
-  message << "Unexpected token: " << tokenName_ << std::endl;
-  return message.str().c_str();
+  message << "Unexpected token: " << tokenName_;
+  return message.str();
 }
 
-ConfigParser::UnknownDirective::UnknownDirective(const char* directiveName,
-    const char* file, int line) : ConfigSyntaxError(file, line) {
-  directiveName_ = directiveName;
-}
+ConfigParser::UnknownDirective::UnknownDirective(const std::string& directiveName,
+    const std::string& file, int line)
+  : ConfigSyntaxError(file, line), directiveName_(directiveName) {}
 
-const char* ConfigParser::UnknownDirective::what() const throw() {
+const std::string ConfigParser::UnknownDirective::what() const throw() {
   std::ostringstream message;
 
-  message << "Unknown directive: " << directiveName_ << std::endl;
-  return message.str().c_str();
+  message << "Unknown directive: " << directiveName_;
+  return message.str();
 }
 
-ConfigParser::ExpectedSeparator::ExpectedSeparator(const char* file,
+ConfigParser::ExpectedSeparator::ExpectedSeparator(const std::string& file,
     int line) : ConfigSyntaxError(file, line) {}
 
-const char* ConfigParser::ExpectedSeparator::what() const throw() {
+const std::string ConfigParser::ExpectedSeparator::what() const throw() {
   std::ostringstream message;
 
-  message << "Expected semicolon" << std::endl;
-  return message.str().c_str();
+  message << "Expected semicolon";
+  return message.str();
 }
 
-ConfigParser::InvalidArgument::InvalidArgument(const char* argument,
-    const char* file, int line) : ConfigSyntaxError(file, line) {
-  argument_ = argument;
-}
+ConfigParser::InvalidArgument::InvalidArgument(const std::string& argument,
+    const std::string& file, int line)
+  : ConfigSyntaxError(file, line), argument_(argument) {}
 
-const char* ConfigParser::InvalidArgument::what() const throw() {
+const std::string ConfigParser::InvalidArgument::what() const throw() {
   std::ostringstream message;
 
-  message << "Invalid argument: " << argument_ << std::endl;
-  return message.str().c_str();
+  message << "Invalid argument: " << argument_;
+  return message.str();
 }

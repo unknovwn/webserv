@@ -16,7 +16,7 @@ void Server::SetListen(const string &listen) {
 //  std::map<int, string> &Server::GetErrorPages() {
 //  return this->error_pages_;
 //}
-string Server::GetErrorPage(int error_val) {
+string Server::GetErrorPage(int error_val) const {
   auto it = error_pages_.find(error_val);
   if (it == error_pages_.end())
     throw Server::Exception();
@@ -28,6 +28,13 @@ void Server::SetErrorPage(int error_val, string &error_file) {
     throw Server::Exception();
   error_pages_.insert(std::pair<int, string>(error_val, error_file));
 }
+//============================== MAX BODY SIZE =================================
+int Server::GetMaxBodySize() const {
+  return this->max_body_size_;
+}
+void Server::SetMaxBodySize(int max_body_size) {
+  this->max_body_size_ = max_body_size;
+}
 //=============================== SERV NAME ====================================
 const string &Server::GetServName() const {
   return this->server_name_;
@@ -36,7 +43,7 @@ void Server::SetServName(const string &serv_name) {
   this->server_name_ = serv_name;
 }
 //============================== Location ======================================
-const std::vector<Location> &Server::GetAll_Loc() {
+const std::vector<Location> &Server::GetLocations() const {
   return this->routes_;
 }
 

@@ -15,11 +15,12 @@ void Location::SetAutoindex(bool autoindex) {
   autoindex_ = autoindex;
 }
 //=============================== METHODS ======================================
-const http_method& Location::GetMethods(size_t id) const {
-  return methods_[id];
+const std::vector<string>& Location::GetMethods() const {
+  return methods_;
 }
-void Location::SetMethods(const std::vector<http_method> &methods) {
-  methods_ = methods;
+
+void Location::AddMethod(const string& method) {
+  methods_.push_back(method);
 }
 //=============================== ROOT =========================================
 const string& Location::GetRoot() const {
@@ -29,18 +30,11 @@ void Location::SetRoot(const string &root) {
   root_ = root;
 }
 //=============================== INDEX ========================================
-const string& Location::GetIndex(size_t id) const {
-  return index_[id];
+const std::vector<string>& Location::GetIndex() const {
+  return index_;
 }
-void Location::SetIndex(const std::vector<string> &index) {
-  index_ = index;
-}
-//=============================== MAX SIZE =====================================
-size_t Location::GetMaxSize() const {
-  return max_body_size_;
-}
-void Location::SetMaxSize(const size_t new_size) {
-  max_body_size_ = new_size;
+void Location::AddIndex(const string& index) {
+  index_.push_back(index);
 }
 //============================ UPLOAD DIR ======================================
 const string &Location::GetUploadDir() const {
@@ -56,11 +50,10 @@ const char *Location::Exception::what() const throw() {
 //=========================== '==' =============================================
 bool Location::operator==(const Location &other) const {
   return (
-  Location::uri_ == other.uri_ &&
-  Location::root_ == other.root_ &&
-  Location::index_ == other.index_ &&
-  Location::autoindex_ == other.autoindex_ &&
-  Location::methods_ == other.methods_ &&
-  Location::max_body_size_ == other.max_body_size_ &&
-  Location::upload_dir_ == other.upload_dir_);
+  uri_ == other.uri_ &&
+  root_ == other.root_ &&
+  index_ == other.index_ &&
+  autoindex_ == other.autoindex_ &&
+  methods_ == other.methods_ &&
+  upload_dir_ == other.upload_dir_);
 }
