@@ -56,3 +56,20 @@ void Request::SetIpPort(const string &ip_port) {
 const char *Request::Exception::what() const throw() {
   return ("Request Exception\n");
 }
+
+void Print() const {
+  std::cout << "uri: " << uri_ << std::endl;
+  std::cout << "root: " << root_ << std::endl;
+  std::cout << "index: "
+  for (auto& index : index_) {
+    std::cout << index << " ";
+  }
+  std::cout << std::endl;
+  std::cout << "autoindex: " << autoindex_ << std::endl;
+  std::cout << "methods: ";
+  for (auto& method : methods_) {
+    std::cout << method << " ";
+  }
+  std::cout << std::endl;
+  std::cout << "upload_dir: " << upload_dir_ << std::endl;
+}

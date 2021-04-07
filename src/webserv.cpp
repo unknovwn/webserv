@@ -137,11 +137,15 @@ int main(int argc, char** argv) {
   }
 
   Lexer lexer(argv[1]);
+  std::vector<Server> servers;
   try {
-    ConfigParser::GetInstance().ParseConfig(argv[1], lexer.get_lexeme());
+    servers = ConfigParser::GetInstance().ParseConfig(argv[1], lexer.get_lexeme());
   } catch (ConfigParser::ConfigSyntaxError& e) {
     std::cout << e.GetFile() << ":" << e.GetLine() << ": "
       << "\x1B[31merror: \033[0m" << e.what() << std::endl;
+  }
+  for (const auto& server : servers) {
+    server.Print();
   }
   return 0;
 }

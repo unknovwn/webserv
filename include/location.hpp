@@ -32,6 +32,7 @@ class Location {
   void                            AddMethod(const string& method);
   const string&                   GetUploadDir() const;
   void                            SetUploadDir(const string &upload_dir);
+  void                            Print() const;
 
   class Exception: public std::exception {   // пока не нужно, оставлю
    public:

@@ -27,7 +27,7 @@ class Lexer {
   Lexer();
   explicit Lexer(const std::string & file_name);
   Lexer(const Lexer& x) = default;
-  Lexer& operator=(const Lexer& x);
+  Lexer& operator=(const Lexer& x) = default;
   ~Lexer() = default;
   // ---------------------------------------------------------------------------
 
@@ -56,6 +56,7 @@ class Lexer {
 
   // Exceptions ----------------------------------------------------------------
   class FileError : public std::exception {
+   public:
     [[nodiscard]] const char* what() const noexcept override;
   };
   // ---------------------------------------------------------------------------

@@ -65,10 +65,26 @@ const Location* Server::GetLocation(const string &uri) const {
 }
 
 void Server::AddLocation(const Location &new_loc) {
-  for (const auto &x : routes_)
-    if (x == new_loc)
+  for (const auto &x : routes_) {
+    if (x.GetUri() == new_loc.GetUri()) {
       throw Server::Exception();
-    routes_.push_back(new_loc);
+    }
+  }
+  routes_.push_back(new_loc);
+}
+//============================= PRINT =========================================
+void Server::Print() const {
+  std::cout << "listen: " << listen_ << std::endl;
+  std::cout << "server_name: " << server_name_ << std::endl;
+  std::cout << "locations:" << std::endl;
+  for (auto& route : routes_) {
+    route.Print();
+  }
+  std::cout << "error_pages:" << std::endl;
+  for (auto& error_page : error_pages_) {
+    std::cout << error_page.first << ": " << error_page.second << std::endl;
+  }
+  std::cout << "max_body_size: " << max_body_size_ << std::endl;
 }
 //========================== EXCEPTION =========================================
 const char *Server::Exception::what() const throw() {

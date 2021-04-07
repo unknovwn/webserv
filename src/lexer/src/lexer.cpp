@@ -17,15 +17,6 @@ Lexer::Lexer(const std::string& file_name)
   this->OpenFile(file_name);
 }
 
-Lexer& Lexer::operator=(const Lexer &x) {
-  if (this == &x) {
-    return *this;
-  }
-  lexeme_ = x.lexeme_;
-  state_  = x.state_;
-  return *this;
-}
-
 // -----------------------------------------------------------------------------
 
 // Getters, Setters ------------------------------------------------------------
@@ -177,7 +168,7 @@ std::string           Lexer::DeleteComment(std::string line) {
     << std::setw(12)
     << token_type_str
     << " : "
-    << i.get_value()
+    << i.get_value() << ", " << i.get_line_nb()
     << std::endl;
   }
 }

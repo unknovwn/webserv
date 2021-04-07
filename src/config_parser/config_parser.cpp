@@ -79,15 +79,14 @@ void ConfigParser::ParseServer(Server& server) {
   while (currToken_.get_type() != TokenType::kCloseBlock) {
     Expect(TokenType::kDirective);
     ParseServerDirective(server);
-    NextToken();
   }
+  NextToken();
 }
 
 void ConfigParser::ParseLocation(Location& location) {
   while (currToken_.get_type() != TokenType::kCloseBlock) {
     Expect(TokenType::kDirective);
     ParseLocationDirective(location);
-    NextToken();
   }
 }
 
@@ -102,10 +101,13 @@ void ConfigParser::ParseServerDirective(Server& server) {
   NextToken();
   auto handler = (*handlerIt).second;
   (this->*handler)(server);
-  NextToken();
-  if ((*handlerIt).first != "location") {
+  if ((*handlerIt).first == "location") {
+    Expect(TokenType::kCloseBlock);
+  } else {
+    NextToken();
     Expect(TokenType::kSeparator);
   }
+  NextToken();
 }
 
 void ConfigParser::ParseLocationDirective(Location& location) {
@@ -122,6 +124,7 @@ void ConfigParser::ParseLocationDirective(Location& location) {
   (this->*handler)(location);
   NextToken();
   Expect(TokenType::kSeparator);
+  NextToken();
 }
 
 
@@ -194,7 +197,6 @@ void ConfigParser::LocationHandler(Server& server) {
   Expect(TokenType::kOpenBlock);
   NextToken();
   ParseLocation(location);
-
   server.AddLocation(location);
 }
 

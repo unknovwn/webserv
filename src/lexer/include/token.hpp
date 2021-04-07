@@ -28,7 +28,7 @@ class Token {
 
   Token(const Token& x) = default;
   ~Token() = default;
-  Token& operator=(const Token& x);
+  Token& operator=(const Token& x) = default;
   // --------------------------------------------------------------------------
 
   // Getters, Setters ----------------------------------------------------------
