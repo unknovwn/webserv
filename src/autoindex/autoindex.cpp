@@ -32,13 +32,14 @@ void    print_dir(std::string &path, std::string &root) {
   out << "<div>"                                   << std::endl;
   out << "<h1>Index of ";
 
+  std::string host_(path);
   size_t found = path.find(root);
   path.erase(found, root.length() - 1);
   out << path;
   out << "</h1>" << std::endl;
   out << "<hr>"                                    << std::endl;
   while ((entry = readdir(dir)) != NULL) {
-    out << "<p><a href=\"" << path + "/" + entry->d_name << "\">";
+    out << "<p><a href=\"" << host_ + entry->d_name << "\">";
     out << entry->d_name;
     if (entry->d_type & DT_DIR)
       out << "/";
@@ -54,8 +55,8 @@ void    print_dir(std::string &path, std::string &root) {
 
 int main() {
 
-  std::string path_("/Users/bmicheal/Projects/webserv/src/autoindex/root/");
-  std::string root_("/Users/bmicheal/Projects/webserv/src/autoindex/root");
+  std::string path_("/Users/bmicheal/Projects/webserv/src/autoindex/");   // no matter put '/' in the End or not
+  std::string root_("/Users/bmicheal/Projects/webserv/src/autoindex/");
 
   if (fileExists("index.php") == false)
     print_dir(path_, root_);
