@@ -1,7 +1,7 @@
+#include <sys/stat.h>
 #include <dirent.h>
 #include <iostream>
 #include <fstream>
-#include <sys/stat.h>
 
 bool   fileExists(const std::string file) {
   struct stat buff;
@@ -19,7 +19,7 @@ void    print_dir(const std::string &path) {
     return;
   }
 
-  std::ofstream out ("autoindex.html");
+  std::ofstream out("autoindex.html");
   out << "<!DOCTYPE html>"                         << std::endl;
   out << "<html>"                                  << std::endl;
   out << "<title> Index of " << path << "</title>" << std::endl;
