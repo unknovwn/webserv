@@ -113,7 +113,8 @@ int main(int argc, char** argv) {
   /*   exit(EXIT_FAILURE); */
   /* } */
 
-  /* if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) { */
+  /* if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) */
+  /* == -1) { */
   /*   std::cerr << "Setsockopt error" << std::endl; */
   /*   exit(EXIT_FAILURE); */
   /* } */
@@ -139,7 +140,8 @@ int main(int argc, char** argv) {
   Lexer lexer(argv[1]);
   std::vector<Server> servers;
   try {
-    servers = ConfigParser::GetInstance().ParseConfig(argv[1], lexer.get_lexeme());
+    servers = ConfigParser::GetInstance()
+      .ParseConfig(argv[1], lexer.get_lexeme());
   } catch (ConfigParser::ConfigSyntaxError& e) {
     std::cout << e.GetFile() << ":" << e.GetLine() << ": "
       << "\x1B[31merror: \033[0m" << e.what() << std::endl;

@@ -242,8 +242,8 @@ void ConfigParser::SaveDirectoryHandler(Location& location) {
 }
 
 
-ConfigParser::ConfigSyntaxError::ConfigSyntaxError(const std::string& file, int line)
-  : file_(file), line_(line) {}
+ConfigParser::ConfigSyntaxError::ConfigSyntaxError(const std::string& file,
+    int line) : file_(file), line_(line) {}
 
 const std::string ConfigParser::ConfigSyntaxError::GetFile() const {
   return file_;
@@ -264,8 +264,8 @@ const std::string ConfigParser::UnexpectedToken::what() const throw() {
   return message.str();
 }
 
-ConfigParser::UnknownDirective::UnknownDirective(const std::string& directiveName,
-    const std::string& file, int line)
+ConfigParser::UnknownDirective::UnknownDirective(
+    const std::string& directiveName, const std::string& file, int line)
   : ConfigSyntaxError(file, line), directiveName_(directiveName) {}
 
 const std::string ConfigParser::UnknownDirective::what() const throw() {
