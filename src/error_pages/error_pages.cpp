@@ -1,12 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <map>
-#include <dirent.h>
-
-#define T '\t'
 
 void    generate_error_page(size_t error_code) {
-  std::ofstream out ("error.html");
+  std::ofstream out("error.html");
   static const std::map<int, std::string> my = {
   {400, "Bad Request"},
   {403, "Forbidden"},
