@@ -39,7 +39,8 @@ ConfigParser& ConfigParser::GetInstance() {
   return instance;
 }
 
-std::vector<Server> ConfigParser::ParseConfig(const std::vector<Token>& tokens) {
+std::vector<Server> ConfigParser::ParseConfig(
+    const std::vector<Token>& tokens) {
   std::vector<Server> servers;
 
   tokensIt_ = tokens.begin();
@@ -254,7 +255,7 @@ void ConfigParser::SaveDirectoryHandler(Location& location) {
 }
 
 
-ConfigParser::ConfigError::ConfigError( int line) : line_(line) {}
+ConfigParser::ConfigError::ConfigError(int line) : line_(line) {}
 
 int ConfigParser::ConfigError::GetLine() const {
   return line_;
