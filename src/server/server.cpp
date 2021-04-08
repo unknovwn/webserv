@@ -50,7 +50,7 @@ void  Server::AddServerName(const string& name) {
     if (x == name)
       return;
   }
-   server_names_.push_back(name);
+  server_names_.push_back(name);
 }
 //============================== Location ======================================
 const std::vector<Location> &Server::GetLocations() const {

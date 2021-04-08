@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "location.hpp"
 #include <utility>
+#include "location.hpp"
 
 using string = std::string;
 
