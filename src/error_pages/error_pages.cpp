@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <vector>
+#include <unordered_map>
 
 void    generate_error_page(size_t error_code) {
   std::ofstream out("error.html");
@@ -35,5 +37,33 @@ void    generate_error_page(size_t error_code) {
 }
 
 int main() {
-  generate_error_page(400);
+//  generate_error_page(400);
+
+  int target = 6;
+
+  std::vector<int> vec;
+  vec.push_back(3);
+  vec.push_back(2);
+  vec.push_back(7);
+  vec.push_back(1);
+  vec.push_back(4);
+
+  // map : 0 - 0 ; 1 - 3; 2 - 5; 3 - 12; 4 - 13; 5 - 17;
+  std::unordered_map<int, int> map_;
+
+//  for (int i = 0; i < vec.size(); i++) {
+//	map_.insert(std::pair<int, int>(vec[i], i));
+//  }
+map_[0] = 0;
+  for (int i = 1; i < vec.size(); i++) {
+    map_[i] = map_[i - 1] + vec[i - 1];
+	//map_.insert(std::pair<int, int>(i, i));
+  }
+
+//  for (int i = 0; i < nums.length; i++) {
+//	int complement = target - nums[i];
+//	if (map.containsKey(complement) && map.get(complement) != i) {
+//	  return new int[] { i, map.get(complement) };
+//	}
+//  }
 }

@@ -13,7 +13,6 @@ void    print_dir(std::string &path, std::string &root) {
   DIR *dir;
   struct dirent *entry;
 
-
   dir = opendir(path.c_str());   // достаем из string - char *
   if (!dir) {
     std::cerr << "Cannot open this directory" << std::endl;
@@ -32,7 +31,7 @@ void    print_dir(std::string &path, std::string &root) {
   out << "<div>"                                   << std::endl;
   out << "<h1>Index of ";
 
-  std::string host_(path);
+  std::string host_(path);   // save our path for link
   size_t found = path.find(root);
   path.erase(found, root.length() - 1);
   out << path;
@@ -53,13 +52,12 @@ void    print_dir(std::string &path, std::string &root) {
   closedir(dir);
 }
 
-int main() {
-
-  std::string path_("/Users/bmicheal/Projects/webserv/src/autoindex/");   // no matter put '/' in the End or not
-  std::string root_("/Users/bmicheal/Projects/webserv/src/autoindex/");
-
-  if (fileExists("index.php") == false)
-    print_dir(path_, root_);
-  else
-    std::cout << "index.php Exists" << std::endl;
-}
+//int main() {
+//  std::string path_("/Users/bmicheal/Projects/webserv/src/autoindex/");   // no matter put '/' in the End or not
+//  std::string root_("/Users/bmicheal/Projects/webserv/src/autoindex/");
+//
+//  if (fileExists("index.php") == false)
+//    print_dir(path_, root_);
+//  else
+//    std::cout << "index.php Exists" << std::endl;
+//}
