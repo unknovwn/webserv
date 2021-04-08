@@ -1,8 +1,9 @@
 #include "server.hpp"
+#define MB 1000000
 
 Server::Server()
-  :listen_("127.0.0.1:80") {
-	server_names_[0] = "intra42.fr";
+  :listen_("127.0.0.1:80"), max_body_size_(1 * MB) {
+  server_names_[0] = "intra42.fr";
 }
 //=============================== LISTEN =======================================
 const string &Server::GetListen() const {
@@ -12,9 +13,6 @@ void Server::SetListen(const string &listen) {
   this->listen_ = listen;
 }
 //=============================== ERROR PAGES ==================================
-//  std::map<int, string> &Server::GetErrorPages() {
-//  return this->error_pages_;
-//}
 string Server::GetErrorPage(int error_val) const {
   auto it = error_pages_.find(error_val);
   if (it == error_pages_.end())
@@ -50,7 +48,7 @@ bool Server::FindServerName(string &name) {
 void  Server::AddServerName(const string& name) {
   for (const auto &x : server_names_) {
     if (x == name)
-	  return;
+      return;
   }
    server_names_.push_back(name);
 }

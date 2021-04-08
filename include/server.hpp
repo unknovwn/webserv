@@ -34,7 +34,6 @@ class Server {
   int                           GetMaxBodySize() const;
   void                          SetMaxBodySize(int max_body_size);
   void                          Print() const;
-// std::map<int, string>&      qGetErrorPages();
 // если заданы то подтягиваем файлы, елси нет - генерим свои
   class Exception: public std::exception {
    public:
