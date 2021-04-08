@@ -31,6 +31,7 @@ class Request{
   void                   SetHeader(const string &name, const string &option);
   const string&          GetIpPort() const;
   void                   SetIpPort(const string &ip_port);
+  void                   Clear();
 
   class Exception: public std::exception {
    public:

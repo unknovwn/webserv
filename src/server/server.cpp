@@ -1,4 +1,4 @@
-#include "../../include/server.hpp"
+#include "server.hpp"
 
 Server::Server()
   :listen_("127.0.0.1:80") {
