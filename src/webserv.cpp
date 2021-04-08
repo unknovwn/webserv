@@ -102,52 +102,64 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
 }
 
 int main(int argc, char** argv) {
-  /* int opt = 1; */
-  /* int sockfd; */
-  /* struct sockaddr_in address; */
-  /* int addrlen = sizeof(address); */
-
-  /* sockfd = socket(AF_INET, SOCK_STREAM, 0); */
-  /* if (sockfd == -1) { */
-  /*   std::cerr << "Cannot create socket" << std::endl; */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
-
-  /* if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) */
-  /* == -1) { */
-  /*   std::cerr << "Setsockopt error" << std::endl; */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
-  /* address.sin_family = AF_INET; */
-  /* address.sin_addr.s_addr = inet_addr("127.0.0.1"); */
-  /* address.sin_port = htons(PORT); */
-
-  /* if (bind(sockfd, (struct sockaddr*)&address, addrlen) == -1) { */
-  /*   std::cerr << "Bind error" << std::endl; */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
-  /* if (listen(sockfd, MAX_CLIENTS) == -1) { */
-  /*   std::cerr << "Listen error" << std::endl; */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
-  /* recieve(sockfd, address, addrlen); */
-
-  if (argc != 2) {
+  if (argc < 2) {
     std::cerr << "No config file specified" << std::endl;
+    return 0;
+  } else if (argc > 2) {
+    std::cerr << "Too many arguments" << std::endl;
     return 0;
   }
 
-  Lexer lexer(argv[1]);
   std::vector<Server> servers;
   try {
+    Lexer lexer(argv[1]);
     servers = ConfigParser::GetInstance()
-      .ParseConfig(argv[1], lexer.get_lexeme());
-  } catch (ConfigParser::ConfigSyntaxError& e) {
-    std::cout << e.GetFile() << ":" << e.GetLine() << ": "
+      .ParseConfig(lexer.get_lexeme());
+  } catch (Lexer::FileError& e) {
+    std::cerr << e.what() << std::endl;
+    return 0;
+  } catch (ConfigParser::ConfigError& e) {
+    std::cerr << argv[1] << ":" << e.GetLine() << ": "
       << "\x1B[31merror: \033[0m" << e.what() << std::endl;
+    return 0;
   }
+
+  std::cout << "+++Servers:+++" << std::endl;
   for (const auto& server : servers) {
     server.Print();
+    std::cout << "----" << std::endl;
   }
+  std::cout << "========================" << std::endl << std::endl;
+
+  int opt = 1;
+  int sockfd;
+  struct sockaddr_in address;
+  int addrlen = sizeof(address);
+
+  sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  if (sockfd == -1) {
+    std::cerr << "Cannot create socket" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+    std::cerr << "Setsockopt error" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  address.sin_family = AF_INET;
+  address.sin_addr.s_addr = inet_addr("127.0.0.1");
+  address.sin_port = htons(PORT);
+
+  if (bind(sockfd, reinterpret_cast<struct sockaddr*>(&address),
+        addrlen) == -1) {
+    std::cerr << "Bind error" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  if (listen(sockfd, MAX_CLIENTS) == -1) {
+    std::cerr << "Listen error" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  recieve(sockfd, address, addrlen);
+
   return 0;
 }

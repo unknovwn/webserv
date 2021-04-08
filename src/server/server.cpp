@@ -2,8 +2,8 @@
 #define MB 1000000
 
 Server::Server()
-  :listen_("127.0.0.1:80"), max_body_size_(1 * MB) {
-  server_names_[0] = "intra42.fr";
+  :listen_("127.0.0.1:80"), server_names_(), max_body_size_(1 * MB) {
+  server_names_.push_back("intra42.fr");
 }
 //=============================== LISTEN =======================================
 const string &Server::GetListen() const {
