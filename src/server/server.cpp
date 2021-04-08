@@ -1,10 +1,9 @@
-#include "server.hpp"
-#include <utility>
+#include "../../include/server.hpp"
 
 Server::Server()
-  :listen_("127.0.0.1:80"), server_name_("intra42.fr"),
-  routes_(), error_pages_()
-{}
+  :listen_("127.0.0.1:80") {
+	server_names_[0] = "intra42.fr";
+}
 //=============================== LISTEN =======================================
 const string &Server::GetListen() const {
   return this->listen_;
@@ -36,11 +35,24 @@ void Server::SetMaxBodySize(int max_body_size) {
   this->max_body_size_ = max_body_size;
 }
 //=============================== SERV NAME ====================================
-const string &Server::GetServName() const {
-  return this->server_name_;
+const std::vector<string> &Server::GetServerNames() const {
+  return server_names_;
 }
-void Server::SetServName(const string &serv_name) {
-  this->server_name_ = serv_name;
+
+bool Server::FindServerName(string &name) {
+  for (const auto &x : server_names_) {
+    if (x == name)
+      return true;
+  }
+  return false;
+}
+
+void  Server::AddServerName(const string& name) {
+  for (const auto &x : server_names_) {
+    if (x == name)
+	  return;
+  }
+   server_names_.push_back(name);
 }
 //============================== Location ======================================
 const std::vector<Location> &Server::GetLocations() const {
@@ -75,7 +87,10 @@ void Server::AddLocation(const Location &new_loc) {
 //============================= PRINT =========================================
 void Server::Print() const {
   std::cout << "listen: " << listen_ << std::endl;
-  std::cout << "server_name: " << server_name_ << std::endl;
+  std::cout << "server_names: ";
+  for (const auto &x : server_names_)
+    std::cout << x;
+  std::cout << std::endl;
   std::cout << "locations:" << std::endl;
   for (auto& route : routes_) {
     route.Print();
@@ -86,6 +101,7 @@ void Server::Print() const {
   }
   std::cout << "max_body_size: " << max_body_size_ << std::endl;
 }
+
 //========================== EXCEPTION =========================================
 const char *Server::Exception::what() const throw() {
   return ("Server context Exception\n");

@@ -4,12 +4,13 @@
 #include <vector>
 #include <map>
 #include "location.hpp"
+#include <utility>
 
 using string = std::string;
 
 class Server {
   string                        listen_;
-  string                        server_name_;
+  std::vector<string>           server_names_;
   std::vector<Location>         routes_;
   std::map<int, string>         error_pages_;
   int                           max_body_size_;
@@ -22,8 +23,9 @@ class Server {
 
   const string&                 GetListen() const;
   void                          SetListen(const string &listen);
-  const string&                 GetServName() const;
-  void                          SetServName(const string &serv_name);
+  const std::vector<string>&    GetServerNames() const;
+  bool                          FindServerName(string &name);
+  void                          AddServerName(const string &name);
   const std::vector<Location>&  GetLocations() const;
   const Location*               GetLocation(const string &uri) const;
   void                          AddLocation(const Location &new_loc);
