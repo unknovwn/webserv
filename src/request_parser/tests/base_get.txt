@@ -1,0 +1,8 @@
+GET    /        HTTP/1.1
+Host:                           www.mgeneviv.com
+Accept-Charset:          utf-8, iso-8859-1;q=0.5, *;q=0.1
+Accept-Language: fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5
+Allow: GET, HEAD, POST
+Authorization: <type> <user data>
+Content-Language: de-DE, en-CA
+

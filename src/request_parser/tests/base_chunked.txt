@@ -1,0 +1,12 @@
+PUT / HTTP/1.1
+Host: www.host.com
+Content-Type: text/plain
+Transfer-Encoding: chunked
+
+7
+Mozilla
+9
+Developer
+7
+Network
+0
