@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <set>
 #include "lexer.hpp"
 #include "config_parser.hpp"
 
@@ -26,7 +27,7 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
   int sd;
   int connected_sock;
 
-  for (int i = 0; i < MAX_CLIENTS + 1; i++) {
+  for (int i = 0; i < MAX_CLIENTS; i++) {
     client_sock[i] = 0;
   }
   while (true) {
@@ -73,7 +74,7 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
           std::cerr << "Recv error" << std::endl;
           exit(EXIT_FAILURE);
         }
-        if (count < 3) {
+        if (count < 1 || (count == 1 && buffer[0] == 4)) {
           close(client_sock[i]);
           client_sock[i] = 0;
         } else {
@@ -102,12 +103,8 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
 }
 
 int main(int argc, char** argv) {
-  if (argc < 2) {
-    std::cerr << "No config file specified" << std::endl;
-    return 0;
-  } else if (argc > 2) {
-    std::cerr << "Too many arguments" << std::endl;
-    return 0;
+  if (argc != 2) {
+    std::cerr << "Wrong number of arguments" << std::endl;
   }
 
   std::vector<Server> servers;
@@ -124,12 +121,15 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  std::cout << "+++Servers:+++" << std::endl;
+  std::set<std::string> addresses;
   for (const auto& server : servers) {
-    server.Print();
-    std::cout << "----" << std::endl;
+    addresses.insert(server.GetListen());
   }
-  std::cout << "========================" << std::endl << std::endl;
+  std::cout << "Addresses:" << std::endl;
+  for (const auto& address : addresses) {
+    std::cout << address << std::endl;
+  }
+  std::cout << "==============" << std::endl << std::endl;
 
   int opt = 1;
   int sockfd;
