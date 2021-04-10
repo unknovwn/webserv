@@ -45,6 +45,16 @@ void Request::SetHeader(const string &name, const string &option) {
   else if ((*it).first == name)
     (*it).second = option;
 }
+//==============================  BODY  ========================================
+
+void Request::AddToBody(const std::string& content) {
+  body_.append(content);
+}
+
+const std::string& Request::GetBody() const {
+  return body_;
+}
+
 //============================== IP_PORT =======================================
 const string &Request::GetIpPort() const {
   return ip_port_;
@@ -63,4 +73,5 @@ void Request::Clear() {
   path_.clear();
   protocol_.clear();
   headers_.clear();
+  body_.clear();
 }

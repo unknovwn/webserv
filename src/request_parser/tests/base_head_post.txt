@@ -1,0 +1,9 @@
+HEAD /.dir/porno HTTP/1.1
+Host: www.mgeneviv.com
+Content-Length: 10
+
+1234567891POST /school21/main_table HTTP/1.1
+Host: www.school21.com
+Content-Length: 27
+
+take Gleb to work in Bocal
