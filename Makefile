@@ -8,29 +8,27 @@ SOURCE_FILES = webserv.cpp \
 			   utils/string.cpp
 
 SRC          = $(addprefix $(SRC_DIR), $(SOURCE_FILES))
-INCLD        = -Iinclude/ -Isrc/lexer/include
+INCLD        = -Iinclude/ -Isrc/lexer/include/ -Isrc/request_parser/include
 
-LIBS         = src/lexer/build/libwebserver_lexer_lib.a
+LIBS         = src/lexer/build/libwebserver_lexer_lib.a \
+			   src/request_parser/build/librequest_parser.a
 
 CC           = clang++
-CFLAGS       = -Wall -Wextra -Werror -std=c++2a -I$(INCLD)
-DEBUG_FLAGS  = -g
+DEBUG_FLAGS  = -g -fsanitize=address
+CFLAGS       = -Wall -Wextra -Werror -std=c++2a $(INCLD)
 
 OBJ          = $(SRC:.cpp=.o)
 
 .cpp.o:
-	$(CC) $(CFLAGS) $(INCLD) -c $< -o $(<:.cpp=.o)
+	$(CC) $(CFLAGS) -c $< -o $(<:.cpp=.o)
 
 
 $(NAME): $(OBJ)
 	cd src/lexer && mkdir -p build && cd build && cmake .. && make
-	$(CC) $(CFLAGS) $(OBJ) $(LIBS) -o $(NAME)
+	cd src/request_parser && mkdir -p build && cd build && cmake .. && make
+	$(CC) $(OBJ) $(LIBS) -o $(NAME)
 
 all: $(NAME)
-
-debug: $(OBJ)
-	$(CC) $(CFLAGS) $(DEBUG_FLAGS) $(OBJ) -o $(NAME)
-
 
 clean:
 	rm -rf $(OBJ)
@@ -38,6 +36,7 @@ clean:
 fclean: clean
 	rm -rf $(NAME)
 	rm -rf src/lexer/build
+	rm -rf src/request_parser/build
 
 re: fclean all
 

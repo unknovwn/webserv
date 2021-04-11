@@ -11,6 +11,7 @@ class Request{
   string                 method_;
   string                 path_;
   string                 protocol_;
+  string                 body_;
   map__                  headers_;
 
  public:
@@ -26,6 +27,8 @@ class Request{
   const string&          GetAProtocol() const;
   void                   SetAProtocol(const string &a_protocol);
   map__&                 GetHeaders();   // доступ к мапе ( на всякий случай)
+  void                   AddToBody(const std::string& content);
+  const std::string&     GetBody() const;
   const string&          Find_GetH_Name(const string &name) const;
   const string&          Find_GetH_Opt(const string &option) const;
   void                   SetHeader(const string &name, const string &option);
