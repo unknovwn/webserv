@@ -6,20 +6,12 @@
 
 using string = std::string;
 
-typedef enum {
-  GET,
-  HEAD,
-  POST,
-  PUT
-} http_method;
-
 class Location {
   string                          uri_;
   string                          root_;
   std::vector<string>             index_;
   bool                            autoindex_;
-  std::vector<http_method>        methods_;   // allowed methods
-  size_t                          max_body_size_;
+  std::vector<string>             methods_;   // allowed methods
   string                          upload_dir_;
 
  public:
@@ -32,18 +24,15 @@ class Location {
   void                            SetUri(const string &uri);
   const string&                   GetRoot() const;
   void                            SetRoot(const string &root);
-  const string&                   GetIndex(size_t id) const;
-  void                            SetIndex
-                                   (const std::vector<string> &index);
+  const std::vector<string>&      GetIndex() const;
+  void                            AddIndex(const string& index);
   bool                            GetAutoindex() const;
   void                            SetAutoindex(bool autoindex);
-  const http_method&              GetMethods(size_t id) const;
-  void                            SetMethods(const std::vector<http_method>
-                                    &methods);
-  size_t                          GetMaxSize() const;
-  void                            SetMaxSize(const size_t new_size);
+  const std::vector<string>&      GetMethods() const;
+  void                            AddMethod(const string& method);
   const string&                   GetUploadDir() const;
   void                            SetUploadDir(const string &upload_dir);
+  void                            Print() const;
 
   class Exception: public std::exception {   // пока не нужно, оставлю
    public:

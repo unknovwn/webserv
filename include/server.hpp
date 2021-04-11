@@ -3,15 +3,17 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "../location/location.hpp"
+#include <utility>
+#include "location.hpp"
 
 using string = std::string;
 
 class Server {
   string                        listen_;
-  string                        server_name_;
+  std::vector<string>           server_names_;
   std::vector<Location>         routes_;
   std::map<int, string>         error_pages_;
+  int                           max_body_size_;
 
  public:
   Server();
@@ -21,14 +23,17 @@ class Server {
 
   const string&                 GetListen() const;
   void                          SetListen(const string &listen);
-  const string&                 GetServName() const;
-  void                          SetServName(const string &serv_name);
-  const std::vector<Location>&  GetAll_Loc();
+  const std::vector<string>&    GetServerNames() const;
+  bool                          FindServerName(string &name);
+  void                          AddServerName(const string &name);
+  const std::vector<Location>&  GetLocations() const;
   const Location*               GetLocation(const string &uri) const;
   void                          AddLocation(const Location &new_loc);
-  string                        GetErrorPage(int error_val);
+  string                        GetErrorPage(int error_val) const;
   void                          SetErrorPage(int error_val, string &error_file);
-// std::map<int, string>&      qGetErrorPages();
+  int                           GetMaxBodySize() const;
+  void                          SetMaxBodySize(int max_body_size);
+  void                          Print() const;
 // если заданы то подтягиваем файлы, елси нет - генерим свои
   class Exception: public std::exception {
    public:

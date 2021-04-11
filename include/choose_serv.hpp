@@ -1,8 +1,8 @@
 #pragma once
 
 #include <vector>
-#include "../server/server.hpp"
-#include "../request/request.hpp"
+#include "server.hpp"
+#include "request.hpp"
 
 Server *choose_serv(Request &request, std::vector<Server> &servers) {
   std::vector <Server*> friendly;

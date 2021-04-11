@@ -56,3 +56,11 @@ void Request::SetIpPort(const string &ip_port) {
 const char *Request::Exception::what() const throw() {
   return ("Request Exception\n");
 }
+//=========================== CLEAR ============================================
+void Request::Clear() {
+  ip_port_.clear();
+  method_.clear();
+  path_.clear();
+  protocol_.clear();
+  headers_.clear();
+}

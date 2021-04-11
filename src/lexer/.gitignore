@@ -32,10 +32,8 @@
 *.app
 
 # Clion
-.idea
-
-.DS_Store
-
-src/location/CMakeLists.txt
+.idea/
 cmake-build-debug/
-server/main.cpp
+
+# gTest
+#googletest/

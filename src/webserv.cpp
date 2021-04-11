@@ -7,6 +7,8 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include "lexer.hpp"
+#include "config_parser.hpp"
 
 #define BUFFER_SIZE 1024
 #define PORT 8080
@@ -24,7 +26,7 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
   int sd;
   int connected_sock;
 
-  for (int i = 0; i < MAX_CLIENTS; i++) {
+  for (int i = 0; i < MAX_CLIENTS + 1; i++) {
     client_sock[i] = 0;
   }
   while (true) {
@@ -84,11 +86,11 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
           body.clear();
           std::ifstream default_page("default_pages/default.html");
           if (default_page) {
-            body << default_page;
+            body << default_page.rdbuf();
             default_page.close();
           }
           ss << "HTTP/1.1 200 OK" << std::endl;
-          ss << "Content-Type: text/plain" << std::endl;
+          ss << "Content-Type: text/html" << std::endl;
           ss << "Content-Length: " << body.str().length() << std::endl;
           ss << std::endl;
           ss << body.str();
@@ -99,34 +101,53 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
   }
 }
 
-int main() {
-  int opt = 1;
-  int sockfd;
-  struct sockaddr_in address;
-  int addrlen = sizeof(address);
+int main(int argc, char** argv) {
+  /* int opt = 1; */
+  /* int sockfd; */
+  /* struct sockaddr_in address; */
+  /* int addrlen = sizeof(address); */
 
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd == -1) {
-    std::cerr << "Cannot create socket" << std::endl;
-    exit(EXIT_FAILURE);
+  /* sockfd = socket(AF_INET, SOCK_STREAM, 0); */
+  /* if (sockfd == -1) { */
+  /*   std::cerr << "Cannot create socket" << std::endl; */
+  /*   exit(EXIT_FAILURE); */
+  /* } */
+
+  /* if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) */
+  /* == -1) { */
+  /*   std::cerr << "Setsockopt error" << std::endl; */
+  /*   exit(EXIT_FAILURE); */
+  /* } */
+  /* address.sin_family = AF_INET; */
+  /* address.sin_addr.s_addr = inet_addr("127.0.0.1"); */
+  /* address.sin_port = htons(PORT); */
+
+  /* if (bind(sockfd, (struct sockaddr*)&address, addrlen) == -1) { */
+  /*   std::cerr << "Bind error" << std::endl; */
+  /*   exit(EXIT_FAILURE); */
+  /* } */
+  /* if (listen(sockfd, MAX_CLIENTS) == -1) { */
+  /*   std::cerr << "Listen error" << std::endl; */
+  /*   exit(EXIT_FAILURE); */
+  /* } */
+  /* recieve(sockfd, address, addrlen); */
+
+  if (argc != 2) {
+    std::cerr << "No config file specified" << std::endl;
+    return 0;
   }
 
-  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
-    std::cerr << "Setsockopt error" << std::endl;
-    exit(EXIT_FAILURE);
+  Lexer lexer(argv[1]);
+  std::vector<Server> servers;
+  try {
+    servers = ConfigParser::GetInstance()
+      .ParseConfig(argv[1], lexer.get_lexeme());
+  } catch (ConfigParser::ConfigSyntaxError& e) {
+    std::cout << e.GetFile() << ":" << e.GetLine() << ": "
+      << "\x1B[31merror: \033[0m" << e.what() << std::endl;
   }
-  address.sin_family = AF_INET;
-  address.sin_addr.s_addr = inet_addr("127.0.0.1");
-  address.sin_port = htons(PORT);
-
-  if (bind(sockfd, (struct sockaddr*)&address, addrlen) == -1) {
-    std::cerr << "Bind error" << std::endl;
-    exit(EXIT_FAILURE);
+  for (const auto& server : servers) {
+    server.Print();
   }
-  if (listen(sockfd, MAX_CLIENTS) == -1) {
-    std::cerr << "Listen error" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  recieve(sockfd, address, addrlen);
   return 0;
 }
