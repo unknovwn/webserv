@@ -20,7 +20,6 @@ class ConfigParser {
 
   std::vector<Token>::const_iterator tokensIt_;
   Token                              currToken_;
-  std::string                        kFileName_;
 
   void NextToken();
   void Expect(TokenType type);
@@ -44,58 +43,66 @@ class ConfigParser {
   void SaveDirectoryHandler(Location& location);
 
  public:
-  class ConfigSyntaxError {
-    const std::string file_;
-    int               line_;
+  class ConfigError {
+    int line_;
 
    protected:
-    ConfigSyntaxError(const std::string& file, int line);
+    ConfigError(int line);
    public:
-    const std::string GetFile() const;
-    int         GetLine() const;
+    int GetLine() const;
     virtual const std::string what() const throw() = 0;
   };
 
- public:
-  class UnexpectedToken: public ConfigSyntaxError {
+ private:
+  class UnexpectedToken: public ConfigError {
     const std::string tokenName_;
 
    public:
-    UnexpectedToken(const std::string& tokenName,
-        const std::string& file, int line);
+    UnexpectedToken(const std::string& tokenName, int line);
     const std::string what() const throw() override;
   };
 
-  class UnknownDirective: public ConfigSyntaxError {
+  class UnknownDirective: public ConfigError {
     const std::string directiveName_;
 
    public:
-    UnknownDirective(const std::string& directiveName,
-        const std::string& file, int line);
+    UnknownDirective(const std::string& directiveName, int line);
     const std::string what() const throw() override;
   };
 
-  class ExpectedSeparator: public ConfigSyntaxError {
+  class ExpectedSeparator: public ConfigError {
    public:
-    ExpectedSeparator(const std::string& file, int line);
+    ExpectedSeparator(int line);
     const std::string what() const throw() override;
   };
 
-  class InvalidArgument: public ConfigSyntaxError {
+  class InvalidArgument: public ConfigError {
     const std::string argument_;
 
    public:
-    InvalidArgument(const std::string& argument,
-        const std::string& file, int line);
+    InvalidArgument(const std::string& argument, int line);
+    const std::string what() const throw() override;
+  };
+
+  class NoLocations: public ConfigError {
+   public:
+    NoLocations();
+    const std::string what() const throw() override;
+  };
+
+  class IdenticalLocationPaths: public ConfigError {
+    const std::string path_;
+
+   public:
+    IdenticalLocationPaths(const std::string& path, int line);
     const std::string what() const throw() override;
   };
 
  public:
   ConfigParser(const ConfigParser&)   = delete;
   void operator=(const ConfigParser&) = delete;
-  ~ConfigParser() = default;
+  ~ConfigParser()                     = default;
 
   static ConfigParser& GetInstance();
-  std::vector<Server>  ParseConfig(const std::string& fileName,
-      const std::vector<Token>& tokens);
+  std::vector<Server>  ParseConfig(const std::vector<Token>& tokens);
 };
