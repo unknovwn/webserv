@@ -51,13 +51,3 @@ void    print_dir(std::string &path, std::string &root) {
 
   closedir(dir);
 }
-
-//int main() {
-//  std::string path_("/Users/bmicheal/Projects/webserv/src/autoindex/");   // no matter put '/' in the End or not
-//  std::string root_("/Users/bmicheal/Projects/webserv/src/autoindex/");
-//
-//  if (fileExists("index.php") == false)
-//    print_dir(path_, root_);
-//  else
-//    std::cout << "index.php Exists" << std::endl;
-//}
