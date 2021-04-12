@@ -5,13 +5,15 @@ SOURCE_FILES = webserv.cpp \
 			   config_parser/config_parser.cpp \
 			   location/location.cpp \
 			   server/server.cpp \
+			   response/src/response.cpp \
 			   utils/string.cpp
 
 SRC          = $(addprefix $(SRC_DIR), $(SOURCE_FILES))
 INCLD        = -Iinclude/ \
 			   -Isrc/lexer/include/ \
 			   -Isrc/request_parser/include \
-			   -Isrc/webserver_client/include
+			   -Isrc/webserver_client/include \
+			   -Isrc/response/include
 
 LIBS         = src/lexer/build/libwebserver_lexer_lib.a \
                src/webserver_client/build/libwebserver_client.a
