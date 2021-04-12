@@ -14,7 +14,6 @@ INCLD        = -Iinclude/ \
 			   -Isrc/webserver_client/include
 
 LIBS         = src/lexer/build/libwebserver_lexer_lib.a \
-			   src/request_parser/build/librequest_parser.a \
 			   src/webserver_client/build/libwebserver_client.a
 
 CC           = clang++
