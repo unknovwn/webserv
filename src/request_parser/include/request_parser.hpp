@@ -249,8 +249,8 @@ class RequestParser {
   // Constructors, destructor, operator= ---------------------------------------
   RequestParser();
   ~RequestParser() = default;
-  RequestParser(const RequestParser& x) = delete;
-  RequestParser& operator=(const RequestParser& x) = delete;
+  RequestParser(const RequestParser& x) = default;
+  RequestParser& operator=(const RequestParser& x) = default;
   // ---------------------------------------------------------------------------
 
 
