@@ -14,7 +14,7 @@ INCLD        = -Iinclude/ \
 			   -Isrc/webserver_client/include
 
 LIBS         = src/lexer/build/libwebserver_lexer_lib.a \
-			   src/webserver_client/build/libwebserver_client.a
+               src/webserver_client/build/libwebserver_client.a
 
 CC           = clang++
 DEBUG_FLAGS  = -g -fsanitize=address
