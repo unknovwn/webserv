@@ -144,6 +144,9 @@ void ConfigParser::ListenHandler(Server& server) {
 
   if (colonCount == 1) {
     auto tokens = split(address, ":");
+    if (tokens.size() != 2) {
+      throw InvalidArgument(address, currToken_.get_line_nb());
+    }
     host = tokens[0];
     port = ParsePort(tokens[1]);
   } else {
@@ -155,11 +158,37 @@ void ConfigParser::ListenHandler(Server& server) {
       port = 80;
     }
   }
+  if (host == "localhost") {
+    host = "127.0.0.1";
+  }
+  if (!isHostValid(host)) {
+    throw InvalidArgument(address, currToken_.get_line_nb());
+  }
   if (port == -1) {
     throw InvalidArgument(address, currToken_.get_line_nb());
   }
   listen << host << ":" << port;
   server.SetListen(listen.str());
+}
+
+bool ConfigParser::isHostValid(const std::string& host) {
+  auto anumbers = split(host, ".");
+
+  if (anumbers.size() != 4) {
+    return false;
+  }
+
+  for (const auto& anumber : anumbers) {
+    if (!contains_only_digits(anumber)
+        || (anumber.length() > 1 && anumber[0] == '0')) {
+      return false;
+    }
+    int inumber = std::stoi(anumber);
+    if (inumber > 255) {
+      return false;
+    }
+  }
+  return true;
 }
 
 int ConfigParser::ParsePort(const std::string& port) {

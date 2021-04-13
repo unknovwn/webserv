@@ -1,5 +1,5 @@
 #include "server.hpp"
-#define MB 1000000
+#define MB 1048576
 
 Server::Server()
   :listen_("127.0.0.1:80"), server_names_(), max_body_size_(1 * MB) {

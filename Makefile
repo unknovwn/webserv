@@ -16,7 +16,8 @@ INCLD        = -Iinclude/ \
 			   -Isrc/response/include
 
 LIBS         = src/lexer/build/libwebserver_lexer_lib.a \
-               src/webserver_client/build/libwebserver_client.a
+               src/webserver_client/build/libwebserver_client.a \
+			   src/request_parser/build/librequest_parser.a
 
 CC           = clang++
 DEBUG_FLAGS  = -g -fsanitize=address

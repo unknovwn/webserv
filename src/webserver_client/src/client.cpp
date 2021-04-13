@@ -7,10 +7,10 @@
 // Constructors, destructor, operator= -----------------------------------------
 
 Client::Client()
-: request_parser_(), timer_(), lifetime_() {}
+: request_parser_(), timer_(), lifetime_(), address_() {}
 
-Client::Client(size_t lifetime)
-: request_parser_(), timer_(), lifetime_(lifetime) {}
+Client::Client(size_t lifetime, const std::string& address)
+: request_parser_(), timer_(), lifetime_(lifetime), address_(address) {}
 
 // ---------------------------------------------------------------------------
 
@@ -18,6 +18,10 @@ Client::Client(size_t lifetime)
 
 void Client::set_lifetime(size_t lifetime) {
   lifetime_ = lifetime;
+}
+
+const std::string& Client::get_address() const {
+  return address_;
 }
 
 // ---------------------------------------------------------------------------

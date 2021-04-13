@@ -31,6 +31,7 @@ class ConfigParser {
   void ParseLocationDirective(Location& location);
 
   void ListenHandler(Server& server);
+  bool isHostValid(const std::string& host);
   int  ParsePort(const std::string& port);
   void ServerNameHandler(Server& server);
   void MaxBodySizeHandler(Server& server);
