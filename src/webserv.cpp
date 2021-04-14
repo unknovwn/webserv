@@ -22,7 +22,8 @@
 #define CLIENT_LIFETIME 60
 
 void recieve(std::map<int,
-    std::pair<std::string, struct sockaddr_in> >& sock) {
+    std::pair<std::string, struct sockaddr_in> >& sock,
+    [[maybe_unused]] const std::vector<Server>& servers) {
   std::ostringstream ss;
   std::ostringstream body;
   int  count;
@@ -117,25 +118,48 @@ void recieve(std::map<int,
           client_sock[i] = 0;
           clients.erase(client_sock[i]);
         } else {
-          clients[client_sock[i]].ResetTimer();
           buffer[count] = '\0';
           std::cout << buffer;
+          Client& client = clients[client_sock[i]];
+          client.ResetTimer();
 
-          ss.str("");
-          ss.clear();
-          body.str("");
-          body.clear();
-          std::ifstream default_page("default_pages/default.html");
-          if (default_page) {
-            body << default_page.rdbuf();
-            default_page.close();
+          Request* request;
+          try {
+            while ((request = client.request_parser_.ParseRequest(buffer))) {
+              std::string response_str("Request parsed\r\n");
+              /* Server& server = find_server(client.get_address()); */
+              /* Response response = server.CreateResponse(*request); */
+              /* std::string response_str = response.ToString(); */
+              send(client_sock[i], response_str.c_str(),
+                  response_str.length(), 0);
+            }
+          } catch (RequestParser::BadRequest& e) {
+            std::string response_str("Bad Request\r\n");
+            send(client_sock[i], response_str.c_str(),
+                response_str.length(), 0);
+            close(client_sock[i]);
+            client_sock[i] = 0;
+            clients.erase(client_sock[i]);
+            /* Server& server = find_server(client.get_address()); */
+            /* Response response = server.CreateBadRequest(); */
+            /* std::string response_str = response.ToString(); */
           }
-          ss << "HTTP/1.1 200 OK" << std::endl;
-          ss << "Content-Type: text/html" << std::endl;
-          ss << "Content-Length: " << body.str().length() << std::endl;
-          ss << std::endl;
-          ss << body.str();
-          send(client_sock[i], ss.str().c_str(), ss.str().length(), 0);
+
+          /* ss.str(""); */
+          /* ss.clear(); */
+          /* body.str(""); */
+          /* body.clear(); */
+          /* std::ifstream default_page("default_pages/default.html"); */
+          /* if (default_page) { */
+          /*   body << default_page.rdbuf(); */
+          /*   default_page.close(); */
+          /* } */
+          /* ss << "HTTP/1.1 200 OK" << std::endl; */
+          /* ss << "Content-Type: text/html" << std::endl; */
+          /* ss << "Content-Length: " << body.str().length() << std::endl; */
+          /* ss << std::endl; */
+          /* ss << body.str(); */
+          /* send(client_sock[i], ss.str().c_str(), ss.str().length(), 0); */
         }
       }
     }
@@ -210,7 +234,7 @@ int main(int argc, char** argv) {
     sock[sockfd] = std::make_pair(address, sockaddr);
   }
 
-  recieve(sock);
+  recieve(sock, servers);
 
   return 0;
 }
