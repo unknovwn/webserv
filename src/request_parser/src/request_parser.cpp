@@ -71,15 +71,26 @@ Request* RequestParser::ParseRequest() {
 }
 
 Request* RequestParser::ParseRequest(const std::string& request) {
+
+
+  if (state_ == State::kMethodState && save_buffer_.empty() && RequestParser::IsSpaces(request)) {
+    return nullptr;
+  }
+
+
   processing_str_.append(request);
   if (save_buffer_.empty() &&
-      state_ != State::kMethodState &&
-      state_ != State::kHeaderState) {
+      (state_ == State::kPathState ||
+      state_ == State::kProtocolVersionState)) {
     RequestParser::LeftSpaceTrim(&processing_str_);
   }
   while (state_ != State::kRequestIsReady && !processing_str_.empty()) {
     if (this->IsHeaderTrigger() || this->IsRequestIsReadyTrigger()) {
-      processing_str_.erase(0, 1);
+      if (processing_str_[0] == '\r') {
+        processing_str_.erase(0, 2);
+      } else {
+        processing_str_.erase(0, 1);
+      }
       this->SetNextState();
     }
     switch (state_) {
@@ -138,6 +149,7 @@ bool     RequestParser::Empty() const {
 [[maybe_unused]] void RequestParser::Refresh() {
   save_buffer_.clear();
   state_                  = State::kMethodState;
+  expect_body_            = false;
   chunked_                = false;
   chunked_state_          = ChunkedState::kContentLengthState;
   chunked_content_length_ = 0;
@@ -168,6 +180,12 @@ void RequestParser::RightSpaceTrim(std::string* s) {
 void RequestParser::DeleteWordWithSpaceAfter(std::string* s, size_t word_end) {
   s->erase(0, word_end + 1);
   RequestParser::LeftSpaceTrim(s);
+}
+
+bool RequestParser::IsSpaces(const std::string& s) {
+  return !s.empty() && std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+    return !std::isspace(ch);
+  }) == s.end();
 }
 
 bool RequestParser::IsSpaceOrTab(unsigned char c) {
@@ -218,7 +236,7 @@ void     RequestParser::CallHeaderHandler(const std::string &func_key,
                                           const std::string& value) {
   auto func_pos(headers_handler_.find(func_key));
   if (func_pos == headers_handler_.end()) {
-    throw BadRequest();
+    return;
   }
   auto f = (*func_pos).second;
   (this->*f)(value);
@@ -236,6 +254,9 @@ void     RequestParser::HandleMethod() {
   found_index = processing_str_.find(METHOD_TRIGGER);
   if (found_index == std::string::npos) {
     this->ProcessingStrToBuffer();
+    if (save_buffer_.find('\n') != std::string::npos) {
+      throw BadRequest();
+    }
     return;
   }
   word = processing_str_.substr(0, found_index);
@@ -357,7 +378,7 @@ void     RequestParser::HandleContentLengthBody() {
   this->SetNextState();
   RequestParser::DeleteWordWithSpaceAfter(&processing_str_,
                                           content_end_index - 1);
-  save_buffer_.clear();
+  save_buffer_.append(processing_str_);
 }
 
 void     RequestParser::HandleChunkedBody() {
@@ -469,13 +490,15 @@ void RequestParser::SetNextChunkedState() {
 bool RequestParser::IsHeaderTrigger() {
   return (state_ == State::kHeaderState &&
           save_buffer_.empty() &&
-          processing_str_[0] == '\n');
+          (processing_str_[0] == '\n' ||
+          processing_str_[0] == '\r'));
 }
 
 bool RequestParser::IsRequestIsReadyTrigger() {
   return (state_ == State::kBodyState &&
           save_buffer_.empty() &&
-          processing_str_[0] == '\n');
+          (processing_str_[0] == '\n' ||
+          processing_str_[0] == '\r'));
 }
 
 // -----------------------------------------------------------------------------
