@@ -2,13 +2,13 @@
 // Created by Gueren Drive on 4/3/21.
 //
 
-#include "request_parser.hpp"
+#include <fcntl.h>
 
 #include <fstream>
 #include <iostream>
-#include <fcntl.h>
 
 #include "gtest/gtest.h"
+#include "request_parser.hpp"
 
 #define BASE_GET_FILE "../base_get.txt"
 #define BASE_CHUNKED_FILE "../base_chunked.txt"
