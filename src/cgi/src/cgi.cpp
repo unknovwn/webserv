@@ -71,7 +71,7 @@ Response Cgi::CreateResponse(Request &request) {
 }
 
 char **Cgi::CreateArgs() const {
-  char **args = (char**)malloc(sizeof(char*) * (1 + 1));
+  char **args = static_cast<char**>(malloc(sizeof(char*) * (1 + 1)));
 
   args[0] = strdup(cgi_bin_path_.c_str());
   args[1] = nullptr;
@@ -126,9 +126,9 @@ char **Cgi::CreateEnv(Request &request) const {
   env["PATH_TRANSLATED"]   = pwd + env["PATH_INFO"];
 
   // Need to add
-//  env["SERVER_NAME"]       = host.getName();
-//  env["SERVER_PORT"]       = std::to_string(host.getPort());
-//  env["REMOTE_ADDR"]       = iptoa(this->_request.getSockAddr().sin_addr.s_addr);
+//  env["SERVER_NAME"] = host.getName();
+//  env["SERVER_PORT"] = std::to_string(host.getPort());
+//  env["REMOTE_ADDR"] = iptoa(this->_request.getSockAddr().sin_addr.s_addr);
 
   // [Header-Header: value] --> env[HTTP_HEADER_HEADER] = value
   for (auto &it : headers) {
@@ -142,7 +142,8 @@ char **Cgi::CreateEnv(Request &request) const {
   }
 
   // env[HTTP_HEADER_HEADER] = value --> [HTTP_HEADER_HEADER]=value
-  char **env_result = (char**)malloc(sizeof(char*) * (env.size() + 1));
+  char **env_result = static_cast<char**>(malloc(sizeof(char*)
+                                                 * (env.size() + 1)));
   if (!env_result) {
     throw Cgi::ResourceError();
   }

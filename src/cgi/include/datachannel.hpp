@@ -39,4 +39,4 @@ class DataChannel {
   const std::string file_name_;
 };
 
-#endif //CGIREQUESTRESPONSE_DATACHANNEL_HPP
+#endif  // CGIREQUESTRESPONSE_DATACHANNEL_HPP
