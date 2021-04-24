@@ -71,13 +71,10 @@ Request* RequestParser::ParseRequest() {
 }
 
 Request* RequestParser::ParseRequest(const std::string& request) {
-
-
-  if (state_ == State::kMethodState && save_buffer_.empty() && RequestParser::IsSpaces(request)) {
+  if (state_ == State::kMethodState && save_buffer_.empty() &&
+      RequestParser::IsSpaces(request)) {
     return nullptr;
   }
-
-
   processing_str_.append(request);
   if (save_buffer_.empty() &&
       (state_ == State::kPathState ||
@@ -613,4 +610,3 @@ void RequestParser::HandleWWWAuthenticate(const std::string& value) {
 }
 
 // -----------------------------------------------------------------------------
-
