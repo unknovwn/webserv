@@ -7,14 +7,12 @@
 #include <fstream>
 #include <iostream>
 
-
 #include "gtest/gtest.h"
+#include "request_parser.hpp"
 
 #define BASE_GET_FILE "../base_get.txt"
 #define BASE_CHUNKED_FILE "../base_chunked.txt"
 #define BASE_HEAD_POST_FILE "../base_head_post.txt"
-
-#include "request_parser.hpp"
 
 #define BUFFER_SIZE_ONE 1
 #define BUFFER_SIZE_TWO 2
@@ -294,4 +292,34 @@ TEST(HeadPostByBig, base_head_post_methods) {
   ASSERT_STREQ("27", headers["Content-Length"].c_str());
   ASSERT_STREQ("take Gleb to work in Bocal\n", request->GetBody().c_str());
   delete request;
+}
+
+TEST(RequsrSlashRSlashN, base_get) {
+  RequestParser                      parser;
+  Request*                           request;
+  std::map<std::string, std::string> headers;
+
+  request = parser.ParseRequest("GET / HTTP/1.1\r\n");
+  ASSERT_EQ(nullptr, request);
+  request = parser.ParseRequest("Host: www.example.com\r\n");
+  ASSERT_EQ(nullptr, request);
+  request = parser.ParseRequest("\r\n");
+  ASSERT_TRUE(request != nullptr);
+  ASSERT_STREQ("GET", request->GetMethod().c_str());
+  ASSERT_STREQ("/", request->GetPath().c_str());
+  ASSERT_STREQ("HTTP/1.1", request->GetAProtocol().c_str());
+  headers = request->GetHeaders();
+  ASSERT_STREQ("www.example.com", headers["Host"].c_str());
+  delete request;
+
+  request = parser.ParseRequest("GET / HTTP/1.1\r\n");
+  ASSERT_EQ(nullptr, request);
+  request = parser.ParseRequest("Host: www.example.com\r\n");
+  ASSERT_EQ(nullptr, request);
+  request = parser.ParseRequest("Content-Length: 10\r\n");
+  ASSERT_EQ(nullptr, request);
+  request = parser.ParseRequest("\r\n");
+  ASSERT_EQ(nullptr, request);
+  request = parser.ParseRequest("12345678\r\n");
+  ASSERT_TRUE(request != nullptr);
 }

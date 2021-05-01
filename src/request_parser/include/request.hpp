@@ -7,7 +7,7 @@
 using string = std::string;
 
 class Request{
-  string                 ip_port_;   // при подключении задаем
+  string                 ip_port_;
   string                 method_;
   string                 path_;
   string                 protocol_;
@@ -40,5 +40,4 @@ class Request{
    public:
     virtual const char* what() const throw();
   };
-//   void                   SetHeaders(const map__ &headers);
 };
