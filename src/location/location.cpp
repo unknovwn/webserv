@@ -40,8 +40,22 @@ void Location::AddIndex(const string& index) {
 const string &Location::GetUploadDir() const {
   return upload_dir_;
 }
-void Location::SetUploadDir(const string &upload_dir) {
+void Location::SetUploadDir(const string& upload_dir) {
   upload_dir_ = upload_dir;
+}
+//============================ CGI EXTENSION ===================================
+const string& Location::GetCgiExtension() const {
+  return cgi_extension_;
+}
+void Location::SetCgiExtension(const string& cgi_extension) {
+  cgi_extension_ = cgi_extension;
+}
+//============================= CGI PATH =======================================
+const string& Location::GetCgiPath() const {
+  return cgi_path_;
+}
+void Location::SetCgiPath(const string& cgi_path) {
+  cgi_path_ = cgi_path;
 }
 //================================= PRINT ======================================
 void Location::Print() const {

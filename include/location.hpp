@@ -13,6 +13,8 @@ class Location {
   bool                            autoindex_;
   std::vector<string>             methods_;   // allowed methods
   string                          upload_dir_;
+  string                          cgi_extension_;
+  string                          cgi_path_;
 
  public:
   Location()                                  = default;
@@ -31,7 +33,11 @@ class Location {
   const std::vector<string>&      GetMethods() const;
   void                            AddMethod(const string& method);
   const string&                   GetUploadDir() const;
-  void                            SetUploadDir(const string &upload_dir);
+  void                            SetUploadDir(const string& upload_dir);
+  const string&                   GetCgiExtension() const;
+  void                            SetCgiExtension(const string& cgi_extension);
+  const string&                   GetCgiPath() const;
+  void                            SetCgiPath(const string& cgi_path);
   void                            Print() const;
 
   class Exception: public std::exception {   // пока не нужно, оставлю

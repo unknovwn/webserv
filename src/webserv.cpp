@@ -125,14 +125,19 @@ void recieve(std::map<int,
 
           Request* request;
           try {
-            while ((request = client.request_parser_.ParseRequest(buffer))) {
-              std::string response_str("Request parsed\r\n");
-              /* Server& server = find_server(client.get_address()); */
-              /* Response response = server.CreateResponse(*request); */
-              /* std::string response_str = response.ToString(); */
-              send(client_sock[i], response_str.c_str(),
-                  response_str.length(), 0);
-            }
+            /* std::cout << buffer; */
+            do {
+              request = client.request_parser_.ParseRequest(buffer);
+              if (request) {
+                std::string response_str("Request parsed\r\n");
+                /* Server& server = find_server(client.get_address()); */
+                /* Response response = server.CreateResponse(*request); */
+                /* std::string response_str = response.ToString(); */
+                send(client_sock[i], response_str.c_str(),
+                    response_str.length(), 0);
+                delete request;
+              }
+            } while (!client.request_parser_.Empty());
           } catch (RequestParser::BadRequest& e) {
             std::string response_str("Bad Request\r\n");
             send(client_sock[i], response_str.c_str(),
@@ -144,22 +149,6 @@ void recieve(std::map<int,
             /* Response response = server.CreateBadRequest(); */
             /* std::string response_str = response.ToString(); */
           }
-
-          /* ss.str(""); */
-          /* ss.clear(); */
-          /* body.str(""); */
-          /* body.clear(); */
-          /* std::ifstream default_page("default_pages/default.html"); */
-          /* if (default_page) { */
-          /*   body << default_page.rdbuf(); */
-          /*   default_page.close(); */
-          /* } */
-          /* ss << "HTTP/1.1 200 OK" << std::endl; */
-          /* ss << "Content-Type: text/html" << std::endl; */
-          /* ss << "Content-Length: " << body.str().length() << std::endl; */
-          /* ss << std::endl; */
-          /* ss << body.str(); */
-          /* send(client_sock[i], ss.str().c_str(), ss.str().length(), 0); */
         }
       }
     }

@@ -31,6 +31,10 @@ ConfigParser::ConfigParser() {
     = &ConfigParser::RootHandler;
   kLocationDirectiveHandlers["save_directory"]
     = &ConfigParser::SaveDirectoryHandler;
+  kLocationDirectiveHandlers["cgi_extension"]
+    = &ConfigParser::CgiExtensionHandler;
+  kLocationDirectiveHandlers["cgi_path"]
+    = &ConfigParser::CgiPathHandler;
 }
 
 ConfigParser& ConfigParser::GetInstance() {
@@ -47,11 +51,6 @@ std::vector<Server> ConfigParser::ParseConfig(
   currToken_ = *tokensIt_;
 
   ParseRoot(servers);
-  for (const auto& server : servers) {
-    if (server.GetLocations().empty()) {
-      throw NoLocations();
-    }
-  }
   return servers;
 }
 
@@ -83,6 +82,9 @@ void ConfigParser::ParseServer(Server& server) {
     Expect(TokenType::kDirective);
     ParseServerDirective(server);
   }
+  if (server.GetLocations().empty()) {
+    throw NoLocations();
+  }
   NextToken();
 }
 
@@ -90,6 +92,9 @@ void ConfigParser::ParseLocation(Location& location) {
   while (currToken_.get_type() != TokenType::kCloseBlock) {
     Expect(TokenType::kDirective);
     ParseLocationDirective(location);
+  }
+  if (location.getCgiExtension() != location.getCgiPath()) {
+    throw InvalidCgiParameters();
   }
 }
 
@@ -283,6 +288,14 @@ void ConfigParser::SaveDirectoryHandler(Location& location) {
   location.SetUploadDir(currToken_.get_value());
 }
 
+void ConfigParser::CgiExtensionHandler(Location& location) {
+  location.SetCgiExtension(currToken_.get_value());
+}
+
+void ConfigParser::CgiPathHandler(Location& location) {
+  location.SetCgiPath(currToken_.get_value());
+}
+
 
 ConfigParser::ConfigError::ConfigError(int line) : line_(line) {}
 
@@ -346,3 +359,10 @@ const std::string ConfigParser::IdenticalLocationPaths::what() const throw() {
   message << "Server locations have identical paths: " << path_;
   return message.str();
 }
+
+ConfigParser::InvalidCgiParameters::InvalidCgiParameters() : ConfigError(0) {}
+
+const std::string ConfigParser::InvalidCgiParameters::what() const throw() {
+  return "Invalid CGI parameters";
+}
+
