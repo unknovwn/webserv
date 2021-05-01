@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <map>
@@ -7,6 +8,9 @@
 #include "location.hpp"
 
 using string = std::string;
+
+class Request;
+class Response;
 
 class Server {
   string                        listen_;
@@ -35,8 +39,20 @@ class Server {
   void                          SetMaxBodySize(int max_body_size);
   void                          Print() const;
 // если заданы то подтягиваем файлы, елси нет - генерим свои
+
+  Response* CreateResponse(Request &request) const;
+  std::vector<Location>::const_reverse_iterator FindLocation(
+                                                        std::string path) const;
+  std::string JoinPath(const std::string &a, const std::string &b) const;
+  std::string GetRealRoot() const;
+
+ private:
+  Response* ResponseFromGet(Request &request, std::string &path) const;
+
+ public:
   class Exception: public std::exception {
    public:
     virtual const char* what() const throw();
   };
+
 };

@@ -1,4 +1,14 @@
+
+#include <unistd.h>
+#include <sys/stat.h>
+
+#include <memory>
+#include <algorithm>
+
 #include "server.hpp"
+#include "response.hpp"
+#include "request.hpp"
+
 #define MB 1048576
 
 Server::Server()
@@ -98,6 +108,65 @@ void Server::Print() const {
     std::cout << error_page.first << ": " << error_page.second << std::endl;
   }
   std::cout << "max_body_size: " << max_body_size_ << std::endl;
+}
+
+//============================= RESPONSE ======================================
+
+Response* Server::CreateResponse(Request &request) const {
+  auto location = FindLocation(request.GetPath());
+  if (location != routes_.rend()) {
+    std::cout << "Location found: " << location->GetUri() << std::endl;
+  } else {
+    std::cout << "Location not found" << std::endl;
+  }
+  std::string full_path = GetRealRoot() + request.GetPath();
+  std::cout << full_path << std::endl;
+  if (request.GetMethod() == "GET") {
+    return ResponseFromGet(request, full_path);
+  }
+  return new Response(Response::kOk);
+}
+
+Response* Server::ResponseFromGet(Request &request, std::string &path) const {
+  struct stat file_stat;
+
+  if (stat(path.c_str(), &file_stat)) {
+    std::cout << "404 NOT FOUND" << std::endl;
+    return new Response(Response::kNotFound);
+  }
+  return new Response(Response::kOk);
+}
+
+std::vector<Location>::const_reverse_iterator Server::FindLocation(
+                                                       std::string path) const {
+  return std::find_if(routes_.rbegin(), routes_.rend(), [&path](Location l) {
+    bool equal = l.GetUri().compare(0, l.GetUri().length(),
+                              path, 0, l.GetUri().length()) == 0;
+    if (equal && path.length() > l.GetUri().length()) {
+      return path.at(l.GetUri().length()) == '/';
+    }
+    return equal;
+  });
+}
+
+std::string Server::JoinPath(const std::string &a, const std::string &b) const {
+  if (a.empty() || b.empty()) {
+    return a.empty() ? b : a;
+  }
+  if (a.back() == '/' && b.front() == '/') {
+    return a.substr(0, a.length() - 1) + b;
+  }
+  if (a.back() != '/' && b.front() != '/') {
+    return a + "/" + b;
+  }
+  return a + b;
+}
+
+std::string Server::GetRealRoot() const {
+  char pwd[1024];
+
+  getcwd(pwd, 1024);
+  return pwd;
 }
 
 //========================== EXCEPTION =========================================
