@@ -16,6 +16,8 @@
 #include "client.hpp"
 #include "config_parser.hpp"
 #include "utils_string.hpp"
+#include "cgi.hpp"
+#include "request.hpp"
 
 #define BUFFER_SIZE 4096
 #define MAX_CLIENTS 1024
