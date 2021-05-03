@@ -45,14 +45,11 @@ class Server {
   Response* CreateResponse(Request &request) const;
 
  private:
-  static Response* ResponseFromGet(Request &request,
-                                   const std::string &path,
+  static Response* ResponseFromGet(Request &request, const std::string &path,
                                    const Location *location);
-  static Response* ResponseFromHead(Request &request,
-                                    const std::string &path,
+  static Response* ResponseFromHead(Request &request, const std::string &path,
                                     const Location *location);
-  static Response* ResponseFromPut(Request &request,
-                                   const std::string &path,
+  static Response* ResponseFromPut(Request &request, const std::string &path,
                                    const Location *location);
 
   static std::map

@@ -225,6 +225,7 @@ Response* Server::ResponseFromPut(Request &request,
     return new Response(Response::kForbidden);
   }
   // Response
+  stat(path.c_str(), &file_stat);
   file.write(request.GetBody().c_str(), request.GetBody().length());
   response->AddHeader("Content-Length", std::to_string(file_stat.st_size));
   response->AddHeader("Content-Type", GetContentType(path));
