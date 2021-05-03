@@ -15,7 +15,8 @@
 
 std::map
         <std::string,
-        std::function<Response*(Request &, const std::string &)> >
+        std::function<Response*(Request&, const std::string&,
+                                const Location*)> >
                                                Server::response_from_methods = {
         {"GET", Server::ResponseFromGet},
         {"HEAD", Server::ResponseFromHead},
@@ -34,7 +35,7 @@ std::map<std::string, std::string> Server::content_types = {
 
 Server::Server()
   :listen_("127.0.0.1:80"), server_names_(), max_body_size_(1 * MB) {
-  server_names_.push_back("intra42.fr");
+  server_names_.emplace_back("intra42.fr");
 }
 //=============================== LISTEN =======================================
 const string &Server::GetListen() const {
@@ -136,63 +137,82 @@ void Server::Print() const {
 Response* Server::CreateResponse(Request &request) const {
   // Find Location
   auto location = FindLocation(request.GetPath());
-  if (location != routes_.rend()) {
-    std::cout << "Location found: " << location->GetUri() << std::endl;
-  } else {
-    std::cout << "Location not found" << std::endl;
-  }
 
   // Getting info
   std::string full_path = GetRealRoot() + request.GetPath();
   std::cout << full_path << std::endl;
 
   // Call Method Handler
-  return response_from_methods[request.GetMethod()](request, full_path);
+  return response_from_methods[request.GetMethod()](request, full_path,
+                                                    location);
 }
 
-Response* Server::ResponseFromGet(Request &request, const std::string &path) {
+Response* Server::ResponseFromGet(Request &request,
+                                  const std::string &path,
+                                  const Location *location = nullptr) {
+  Response    *response(nullptr);
   struct stat file_stat;
 
-  // 404
-  if (stat(path.c_str(), &file_stat)) {
+  // If math location
+  if (location) {
+    response = GetResponseFromLocationIndex(*location);
+    if (response) {
+      return response;
+    }
+  }
+
+  // 404 TODO(gdrive): autoindex
+  if (location || stat(path.c_str(), &file_stat)) {
     std::cout << "404 NOT FOUND" << std::endl;
     return new Response(Response::kNotFound);
   }
 
   // Response
-  auto *response = new Response(Response::kOk);
+  response = new Response(Response::kOk);
   response->AddToBody(FileToString(path.c_str()));
-  response->AddHeader("Content-Length",std::move(
-                                std::to_string(response->get_body().length())));
+  response->AddHeader("Content-Length",std::to_string(
+                                                response->get_body().length()));
   response->AddHeader("Content-Type", GetContentType(path));
   return response;
 }
 
-Response* Server::ResponseFromHead(Request &request, const std::string &path) {
+Response* Server::ResponseFromHead(Request &request,
+                                   const std::string &path,
+                                   const Location *location = nullptr) {
+  Response    *response(nullptr);
   struct stat file_stat;
 
+  if (location) {
+    response = GetResponseFromLocationIndex(*location);
+    if (response) {
+      response->ClearBody();
+      return response;
+    }
+  }
+
   // 404
-  if (stat(path.c_str(), &file_stat)) {
+  if (location || stat(path.c_str(), &file_stat)) {
     std::cout << "404 NOT FOUND" << std::endl;
     return new Response(Response::kNotFound);
   }
 
   // Response
-  auto *response = new Response(Response::kOk);
-  response->AddHeader("Content-Length", std::move(
-                                            std::to_string(file_stat.st_size)));
-  response->AddHeader("Content-Type", std::move(GetContentType(path)));
+  response = new Response(Response::kOk);
+  response->AddHeader("Content-Length", std::to_string(file_stat.st_size));
+  response->AddHeader("Content-Type", GetContentType(path));
   return response;
 }
 
-Response* Server::ResponseFromPut(Request &request, const std::string &path) {
+Response* Server::ResponseFromPut(Request &request,
+                                  const std::string &path,
+                                  const Location *location = nullptr) {
   struct stat   file_stat;
   Response      *response;
 
   // If file not exist
   if (stat(path.c_str(), &file_stat)) {
     response = new Response(Response::kCreated);
-    response->AddHeader("Content-Location", path.c_str());
+    response->AddHeader("Content-Location", path);
   } else {
     response = new Response(Response::kNoContent);
   }
@@ -206,15 +226,33 @@ Response* Server::ResponseFromPut(Request &request, const std::string &path) {
   }
   // Response
   file.write(request.GetBody().c_str(), request.GetBody().length());
-  response->AddHeader("Content-Length", std::move(
-                                            std::to_string(file_stat.st_size)));
-  response->AddHeader("Content-Type", std::move(GetContentType(path)));
+  response->AddHeader("Content-Length", std::to_string(file_stat.st_size));
+  response->AddHeader("Content-Type", GetContentType(path));
   return response;
 }
 
-std::vector<Location>::const_reverse_iterator Server::FindLocation(
-                                                       std::string path) const {
-  return std::find_if(routes_.rbegin(), routes_.rend(), [&path](Location l) {
+Response *Server::GetResponseFromLocationIndex(const Location &location) {
+  struct stat file_stat;
+
+  for(auto &i : location.GetIndex()) {
+    std::string real_path(JoinPath(GetRealRoot(), location.GetUri()));
+    real_path = JoinPath(real_path, i);
+    if (!stat(real_path.c_str(), &file_stat)) {
+      auto response = new Response(Response::kOk);
+      response->AddToBody(FileToString(real_path.c_str()));
+      response->AddHeader("Content-Length",std::to_string(
+                                                response->get_body().length()));
+      response->AddHeader("Content-Type", GetContentType(real_path));
+      return response;
+    }
+  }
+  return nullptr;
+}
+
+const Location* Server::FindLocation(std::string path) const {
+  auto location =  std::find_if(routes_.rbegin(),
+                                routes_.rend(),
+                                [&path](const Location& l) {
     bool equal = l.GetUri().compare(0, l.GetUri().length(),
                               path, 0, l.GetUri().length()) == 0;
     if (equal && path.length() > l.GetUri().length()) {
@@ -222,6 +260,7 @@ std::vector<Location>::const_reverse_iterator Server::FindLocation(
     }
     return equal;
   });
+  return location == routes_.rend() ? nullptr : &(*location);
 }
 
 std::string Server::JoinPath(const std::string &a, const std::string &b) {
@@ -264,6 +303,6 @@ std::string Server::GetContentType(const std::string &filename) {
 }
 
 //========================== EXCEPTION =========================================
-const char *Server::Exception::what() const throw() {
+const char *Server::Exception::what() const noexcept {
   return ("Server context Exception\n");
 }

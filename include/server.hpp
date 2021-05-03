@@ -43,19 +43,25 @@ class Server {
 // если заданы то подтягиваем файлы, елси нет - генерим свои
 
   Response* CreateResponse(Request &request) const;
-  std::vector<Location>::const_reverse_iterator FindLocation(
-                                                        std::string path) const;
 
  private:
-  static Response* ResponseFromGet(Request &request, const std::string &path);
-  static Response* ResponseFromHead(Request &request, const std::string &path);
-  static Response* ResponseFromPut(Request &request, const std::string &path);
+  static Response* ResponseFromGet(Request &request,
+                                   const std::string &path,
+                                   const Location *location);
+  static Response* ResponseFromHead(Request &request,
+                                    const std::string &path,
+                                    const Location *location);
+  static Response* ResponseFromPut(Request &request,
+                                   const std::string &path,
+                                   const Location *location);
 
   static std::map
   <std::string,
-  std::function<Response*(Request &, const std::string &)> >
+  std::function<Response*(Request&, const std::string&, const Location*)> >
                                                           response_from_methods;
 
+  static Response    *GetResponseFromLocationIndex(const Location &location);
+  const Location     *FindLocation(std::string path) const;
   static std::string JoinPath(const std::string &a, const std::string &b);
   static std::string GetRealRoot();
   static std::string FileToString(const char *filename);

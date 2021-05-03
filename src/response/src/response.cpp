@@ -65,6 +65,10 @@ void Response::AddToBody(const std::string& content) {
   body_.append(content);
 }
 
+void Response::ClearBody() {
+  body_.clear();
+}
+
 // -----------------------------------------------------------------------------
 
 std::ostream &operator<<(std::ostream &out, const Response &response) {

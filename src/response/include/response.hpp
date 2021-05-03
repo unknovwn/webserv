@@ -56,6 +56,7 @@ class Response {
   // Member-functions ----------------------------------------------------------
   void AddHeader(const std::string& header, const std::string& value);
   void AddToBody(const std::string& content);
+  void ClearBody();
   // ---------------------------------------------------------------------------
 
  private:
