@@ -4,12 +4,33 @@
 
 #include <memory>
 #include <algorithm>
+#include <fstream>
+#include <functional>
 
 #include "server.hpp"
 #include "response.hpp"
 #include "request.hpp"
 
 #define MB 1048576
+
+std::map
+        <std::string,
+        std::function<Response*(Request &, const std::string &)> >
+                                               Server::response_from_methods = {
+        {"GET", Server::ResponseFromGet},
+        {"HEAD", Server::ResponseFromHead},
+        {"PUT", Server::ResponseFromPut}
+};
+
+std::map<std::string, std::string> Server::content_types = {
+        {".html", "text/html"},
+        {".css", "text/css"},
+        {".js", "text/javascript"},
+        {".gif", "image/gif"},
+        {".jpg", "image/jpeg"},
+        {".jpeg", "image/jpeg"},
+        {".png", "image/png"}
+};
 
 Server::Server()
   :listen_("127.0.0.1:80"), server_names_(), max_body_size_(1 * MB) {
@@ -113,28 +134,82 @@ void Server::Print() const {
 //============================= RESPONSE ======================================
 
 Response* Server::CreateResponse(Request &request) const {
+  // Find Location
   auto location = FindLocation(request.GetPath());
   if (location != routes_.rend()) {
     std::cout << "Location found: " << location->GetUri() << std::endl;
   } else {
     std::cout << "Location not found" << std::endl;
   }
+
+  // Getting info
   std::string full_path = GetRealRoot() + request.GetPath();
   std::cout << full_path << std::endl;
-  if (request.GetMethod() == "GET") {
-    return ResponseFromGet(request, full_path);
-  }
-  return new Response(Response::kOk);
+
+  // Call Method Handler
+  return response_from_methods[request.GetMethod()](request, full_path);
 }
 
-Response* Server::ResponseFromGet(Request &request, std::string &path) const {
+Response* Server::ResponseFromGet(Request &request, const std::string &path) {
   struct stat file_stat;
 
+  // 404
   if (stat(path.c_str(), &file_stat)) {
     std::cout << "404 NOT FOUND" << std::endl;
     return new Response(Response::kNotFound);
   }
-  return new Response(Response::kOk);
+
+  // Response
+  auto *response = new Response(Response::kOk);
+  response->AddToBody(FileToString(path.c_str()));
+  response->AddHeader("Content-Length",std::move(
+                                std::to_string(response->get_body().length())));
+  response->AddHeader("Content-Type", GetContentType(path));
+  return response;
+}
+
+Response* Server::ResponseFromHead(Request &request, const std::string &path) {
+  struct stat file_stat;
+
+  // 404
+  if (stat(path.c_str(), &file_stat)) {
+    std::cout << "404 NOT FOUND" << std::endl;
+    return new Response(Response::kNotFound);
+  }
+
+  // Response
+  auto *response = new Response(Response::kOk);
+  response->AddHeader("Content-Length", std::move(
+                                            std::to_string(file_stat.st_size)));
+  response->AddHeader("Content-Type", std::move(GetContentType(path)));
+  return response;
+}
+
+Response* Server::ResponseFromPut(Request &request, const std::string &path) {
+  struct stat   file_stat;
+  Response      *response;
+
+  // If file not exist
+  if (stat(path.c_str(), &file_stat)) {
+    response = new Response(Response::kCreated);
+    response->AddHeader("Content-Location", path.c_str());
+  } else {
+    response = new Response(Response::kNoContent);
+  }
+  std::ofstream file(path.c_str());
+
+  // Error
+  if (!file.is_open()) {
+    std::cerr << "ERROR: can't open/create file" << std::endl;
+    delete response;
+    return new Response(Response::kForbidden);
+  }
+  // Response
+  file.write(request.GetBody().c_str(), request.GetBody().length());
+  response->AddHeader("Content-Length", std::move(
+                                            std::to_string(file_stat.st_size)));
+  response->AddHeader("Content-Type", std::move(GetContentType(path)));
+  return response;
 }
 
 std::vector<Location>::const_reverse_iterator Server::FindLocation(
@@ -149,7 +224,7 @@ std::vector<Location>::const_reverse_iterator Server::FindLocation(
   });
 }
 
-std::string Server::JoinPath(const std::string &a, const std::string &b) const {
+std::string Server::JoinPath(const std::string &a, const std::string &b) {
   if (a.empty() || b.empty()) {
     return a.empty() ? b : a;
   }
@@ -162,11 +237,30 @@ std::string Server::JoinPath(const std::string &a, const std::string &b) const {
   return a + b;
 }
 
-std::string Server::GetRealRoot() const {
+std::string Server::GetRealRoot() {
   char pwd[1024];
 
   getcwd(pwd, 1024);
   return pwd;
+}
+
+std::string Server::FileToString(const char *filename) {
+  std::ifstream t(filename);
+  std::string   str((std::istreambuf_iterator<char>(t)),
+                    std::istreambuf_iterator<char>());
+
+  return std::move(str);
+}
+
+std::string Server::GetContentType(const std::string &filename) {
+  size_t found_index = filename.rfind('.');
+
+  if (found_index == std::string::npos) {
+    return std::move(std::string("text/plain"));
+  }
+  std::string ext(filename.substr(found_index));
+  std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+  return content_types[ext];
 }
 
 //========================== EXCEPTION =========================================

@@ -2,6 +2,8 @@
 // Created by Gueren Drive on 4/12/21.
 //
 
+#include <iostream>
+
 #include "response.hpp"
 
 // initialization static fields ------------------------------------------------
@@ -12,6 +14,7 @@ std::map<int, std::string> Response::status_messages_ = {
         {Response::StatusCodes::kOk,               "200 OK"},
         {Response::StatusCodes::kCreated,          "201 Created"},
         {Response::StatusCodes::kAccepted,         "202 Accepted"},
+        {Response::StatusCodes::kNoContent,        "204 No Content"},
         {Response::StatusCodes::kMovedPermanently, "301 Moved Permanently"},
         {Response::StatusCodes::kBadRequest,       "400 Bad Request"},
         {Response::StatusCodes::kForbidden,        "403 Forbidden"},
@@ -46,6 +49,10 @@ const std::string& Response::get_body() const {
   return body_;
 }
 
+const std::map<const std::string, std::string> &Response::get_headers() const {
+  return headers_;
+}
+
 // -----------------------------------------------------------------------------
 
 // Member-functions ----------------------------------------------------------
@@ -59,3 +66,36 @@ void Response::AddToBody(const std::string& content) {
 }
 
 // -----------------------------------------------------------------------------
+
+std::ostream &operator<<(std::ostream &out, const Response &response) {
+  out
+  << "\nResponse ========\n"
+  << "\n--- Headers ---\n";
+  if (response.get_headers().count("Host")) {
+    out
+    << "Host: "
+    << response.get_header_value("Host") << "\n";
+  }
+  if (response.get_headers().count("Content-Length")) {
+    out
+    << "Content-Length: "
+    << response.get_header_value("Content-Length") << "\n";
+  }
+  if (response.get_headers().count("Content-Type")) {
+    out
+    << "Content-Type: "
+    << response.get_header_value("Content-Type") << "\n";
+  }
+  if (response.get_headers().count("Content-Location")) {
+    out
+    << "Content-Location: "
+    << response.get_header_value("Content-Location") << "\n";
+  }
+  out
+  << "---------------\n"
+  << "\n-----BODY -----\n"
+  << response.get_body()
+  << "\n---------------\n"
+  << "\n=================\n";
+  return out;
+}
