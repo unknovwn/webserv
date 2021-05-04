@@ -24,7 +24,8 @@ std::map<int, std::string> Response::status_messages_ = {
         {Response::StatusCodes::kLengthRequired,   "411 Length Required"},
         {Response::StatusCodes::kPayloadTooLarge,  "413 Payload Too Large"},
         {Response::StatusCodes::kInternalServerError,
-                                                   "500 Internal Server Error"}
+                                                   "500 Internal Server Error"},
+        {Response::StatusCodes::kNotImplemented,   "501 Not Implemented"}
 };
 
 // -----------------------------------------------------------------------------

@@ -51,6 +51,8 @@ class Server {
                                     const Location *location);
   static Response* ResponseFromPut(Request &request, const std::string &path,
                                    const Location *location);
+  static Response* ResponseFromPost(Request &request, const std::string &path,
+                                    const Location *location);
 
   static std::map
   <std::string,

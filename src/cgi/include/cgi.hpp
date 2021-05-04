@@ -43,6 +43,9 @@ class Cgi {
 
  private:
   std::string cgi_bin_path_;
+  std::string server_name_;
+  std::string server_port_;
+  std::string remote_addr_;
 };
 
 #endif  // CGIREQUESTRESPONSE_CGI_HPP

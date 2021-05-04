@@ -35,7 +35,8 @@ class Response {
     kRequestTimeout = 408,
     kLengthRequired = 411,
     kPayloadTooLarge = 413,
-    kInternalServerError = 500
+    kInternalServerError = 500,
+    kNotImplemented = 501
   };
   // Constructors, destructor, operator= ---------------------------------------
   Response() = delete;

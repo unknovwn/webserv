@@ -20,19 +20,6 @@ Response Cgi::CreateResponse(Request &request) {
   char **args = this->CreateArgs();
   char **env = this->CreateEnv(request);
 
-  // For tests
-  std::cout << "\nARGS ===========\n" << std::endl;
-  for (int i = 0; args[i] != nullptr ; ++i) {
-    std::cout << args[i] << std::endl;
-  }
-  std::cout << "\n================\n\n" << std::endl;
-
-  std::cout << "\nENV ============\n" << std::endl;
-  for (int i = 0; env[i] != nullptr ; ++i) {
-    std::cout << env[i] << std::endl;
-  }
-  std::cout << "\n================\n\n" << std::endl;
-
   // Put body to file
   DataChannel request_data(".request_data_cache");
   request_data.PutData(request.GetBody().c_str());
@@ -62,12 +49,13 @@ Response Cgi::CreateResponse(Request &request) {
   waitpid(pid, &status, 0);
   std::string response_str(response_data.ReadData());
 
-  // Need parse response_str --> class Response
-  std::cout << response_str << std::endl;
-
   Cgi::Free2DMatrix<char>(args);
   Cgi::Free2DMatrix<char>(env);
-  return Response(Response::StatusCodes::kOk);
+
+  // TODO(gdrive): Need parse response_str --> class Response
+  Response response(Response::StatusCodes::kOk);
+  response.AddToBody(response_str);
+  return response;
 }
 
 char **Cgi::CreateArgs() const {
@@ -125,7 +113,7 @@ char **Cgi::CreateEnv(Request &request) const {
   env["PATH_INFO"]         = request.GetPath();
   env["PATH_TRANSLATED"]   = pwd + env["PATH_INFO"];
 
-  // Need to add
+  // TODO(gdrive): Need to add
 //  env["SERVER_NAME"] = host.getName();
 //  env["SERVER_PORT"] = std::to_string(host.getPort());
 //  env["REMOTE_ADDR"] = iptoa(this->_request.getSockAddr().sin_addr.s_addr);

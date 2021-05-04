@@ -10,6 +10,7 @@
 #include "server.hpp"
 #include "response.hpp"
 #include "request.hpp"
+#include "cgi.hpp"
 
 #define MB 1048576
 
@@ -20,7 +21,8 @@ std::map
                                                Server::response_from_methods = {
         {"GET", Server::ResponseFromGet},
         {"HEAD", Server::ResponseFromHead},
-        {"PUT", Server::ResponseFromPut}
+        {"PUT", Server::ResponseFromPut},
+        {"POST", Server::ResponseFromPost}
 };
 
 std::map<std::string, std::string> Server::content_types = {
@@ -162,7 +164,8 @@ Response* Server::ResponseFromGet(Request &request,
   }
 
   // 404 TODO(gdrive): autoindex
-  if (location || stat(path.c_str(), &file_stat)) {
+  if ((location && !location->GetIndex().empty()) ||
+      stat(path.c_str(), &file_stat)) {
     std::cout << "404 NOT FOUND" << std::endl;
     return new Response(Response::kNotFound);
   }
@@ -191,7 +194,8 @@ Response* Server::ResponseFromHead(Request &request,
   }
 
   // 404
-  if (location || stat(path.c_str(), &file_stat)) {
+  if ((location && !location->GetIndex().empty()) ||
+      stat(path.c_str(), &file_stat)) {
     std::cout << "404 NOT FOUND" << std::endl;
     return new Response(Response::kNotFound);
   }
@@ -230,6 +234,21 @@ Response* Server::ResponseFromPut(Request &request,
   response->AddHeader("Content-Length", std::to_string(file_stat.st_size));
   response->AddHeader("Content-Type", GetContentType(path));
   return response;
+}
+
+Response *Server::ResponseFromPost(Request &request, const std::string &path,
+                                   const Location *location) {
+  size_t dot = path.rfind('.');
+
+  if (!location || dot == std::string::npos) {
+    return new Response(Response::kOk);
+  }
+  if (path.substr(dot) != location->GetCgiExtension()) {
+    return new Response(Response::kOk);
+  }
+  Cgi cgi(location->GetCgiPath());
+
+  return new Response(cgi.CreateResponse(request));
 }
 
 Response *Server::GetResponseFromLocationIndex(const Location &location) {
