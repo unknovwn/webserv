@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <map>
 
@@ -25,6 +26,7 @@ class Response {
     kOk = 200,
     kCreated = 201,
     kAccepted = 202,
+    kNoContent = 204,
     kMovedPermanently = 301,
     kBadRequest = 400,
     kForbidden = 403,
@@ -33,7 +35,8 @@ class Response {
     kRequestTimeout = 408,
     kLengthRequired = 411,
     kPayloadTooLarge = 413,
-    kInternalServerError = 500
+    kInternalServerError = 500,
+    kNotImplemented = 501
   };
   // Constructors, destructor, operator= ---------------------------------------
   Response() = delete;
@@ -48,13 +51,14 @@ class Response {
   [[nodiscard]] const std::string& get_header_value(
                                                const std::string& header) const;
   [[nodiscard]] const std::string& get_body() const;
+  const std::map<const std::string, std::string> &get_headers() const;
   // ---------------------------------------------------------------------------
 
   // Member-functions ----------------------------------------------------------
   void AddHeader(const std::string& header, const std::string& value);
   void AddToBody(const std::string& content);
+  void ClearBody();
   // ---------------------------------------------------------------------------
-
 
  private:
   int                                      status_;
@@ -62,3 +66,5 @@ class Response {
   std::map<const std::string, std::string> headers_;
   std::string                              body_;
 };
+
+std::ostream   &operator<<(std::ostream &out, Response const &response);
