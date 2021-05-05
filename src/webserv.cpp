@@ -23,9 +23,29 @@
 #define MAX_CLIENTS 1024
 #define CLIENT_LIFETIME 60
 
+Server* find_server(const std::vector<Server>& servers, const Request& request) {
+  std::vector<Server*> friendly;
+  size_t num_of_matches = 0;
+
+  for (const auto& cur : servers) {
+    if (request.GetIpPort() == cur.GetListen()) {
+      ++num_of_matches;
+      friendly.push_back(&cur);
+    }
+  }
+
+  for (const auto& cur : friendly) {
+    auto serv_names = cur->GetServerNames();
+    if (std::find(serv_names.begin(), serv_names.end(),
+          request.Find_GetH_Opt("Host")) != serv_names.end())
+      return cur;
+  }
+  return friendly[0];
+}
+
 void recieve(std::map<int,
     std::pair<std::string, struct sockaddr_in> >& sock,
-    [[maybe_unused]] const std::vector<Server>& servers) {
+    const std::vector<Server>& servers) {
   std::ostringstream ss;
   std::ostringstream body;
   int  count;
@@ -59,8 +79,6 @@ void recieve(std::map<int,
       sd = client_sock[i];
       if (sd > 0) {
         if (!clients[sd].Alive()) {
-          std::cout << "Client " << client_sock[i]
-            << " disconnected" << std::endl;
           close(sd);
           clients.erase(sd);
           client_sock[i] = 0;
@@ -98,8 +116,6 @@ void recieve(std::map<int,
           if (client_sock[i] == 0) {
             client_sock[i] = connected_sock;
             clients[connected_sock] = Client(CLIENT_LIFETIME, address.first);
-            std::cout << "Client " << client_sock[i] << " connected to "
-              << address.first << std::endl;
             break;
           }
         }
@@ -114,46 +130,37 @@ void recieve(std::map<int,
           exit(EXIT_FAILURE);
         }
         if (count == 0 || (count == 1 && buffer[0] == 4)) {
-          std::cout << "Client " << client_sock[i]
-            << " disconnected" << std::endl;
           close(client_sock[i]);
           client_sock[i] = 0;
           clients.erase(client_sock[i]);
         } else {
           buffer[count] = '\0';
-          std::cout << buffer;
           Client& client = clients[client_sock[i]];
           client.ResetTimer();
 
           Request* request;
           try {
-            /* std::cout << buffer; */
             do {
               request = client.request_parser_.ParseRequest(buffer);
               buffer[0] = '\0';
               if (request) {
-                std::string response_str("Request parsed\r\n");
-                std::unique_ptr<Response> response(
-                                           servers[0].CreateResponse(*request));
-                std::cout << *response << std::endl;
-                /* Server& server = find_server(client.get_address()); */
-                /* Response response = server.CreateResponse(*request); */
-                /* std::string response_str = response.ToString(); */
+                request->SetIpPort(sock[client_sock[i]].first);
+                Server* server = find_server(servers, *request);
+                Response* response = server->CreateResponse(*request);
+                std::string response_str = response->ToString();
                 send(client_sock[i], response_str.c_str(),
                     response_str.length(), 0);
                 delete request;
               }
             } while (!client.request_parser_.Empty());
           } catch (RequestParser::BadRequest& e) {
-            std::string response_str("Bad Request\r\n");
+            Response response = Server::CreateBadRequest();
+            std::string response_str = response->ToString();
             send(client_sock[i], response_str.c_str(),
                 response_str.length(), 0);
             close(client_sock[i]);
             client_sock[i] = 0;
             clients.erase(client_sock[i]);
-            /* Server& server = find_server(client.get_address()); */
-            /* Response response = server.CreateBadRequest(); */
-            /* std::string response_str = response.ToString(); */
           }
         }
       }
