@@ -70,6 +70,21 @@ void Response::ClearBody() {
   body_.clear();
 }
 
+std::string Response::ToString() const {
+  std::string response_str;
+
+  // Status
+  response_str.append(get_status_message() + "\r\n");
+  //Headers
+  for (auto &i : get_headers()) {
+    response_str.append(i.first + ": " + i.second + "\r\n");
+  }
+  response_str.append("\r\n");
+  //Body
+  response_str.append(get_body());
+  return response_str;
+}
+
 // -----------------------------------------------------------------------------
 
 std::ostream &operator<<(std::ostream &out, const Response &response) {
