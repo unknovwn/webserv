@@ -2,6 +2,8 @@
 // Created by Gueren Drive on 4/10/21.
 //
 
+#include <string>
+
 #include "request_parser.hpp"
 #include "timer.hpp"
 

@@ -267,6 +267,7 @@ class RequestParser {
   static void RightSpaceTrim(std::string* s);
   [[maybe_unused]] static void SpaceTrim(std::string* s);
   static void DeleteWordWithSpaceAfter(std::string* s, size_t word_end);
+  static bool IsSpaces(const std::string& s);
   static bool IsSpaceOrTab(unsigned char c);
   static bool IsHexNumbers(const std::string& s);
   static bool IsHexNumber(unsigned char c);
