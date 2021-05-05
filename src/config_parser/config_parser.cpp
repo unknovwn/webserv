@@ -93,7 +93,7 @@ void ConfigParser::ParseLocation(Location& location) {
     Expect(TokenType::kDirective);
     ParseLocationDirective(location);
   }
-  if (location.getCgiExtension() != location.getCgiPath()) {
+  if (location.GetCgiExtension().empty() != location.GetCgiPath().empty()) {
     throw InvalidCgiParameters();
   }
 }
