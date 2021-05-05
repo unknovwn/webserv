@@ -9,69 +9,105 @@
 
 #include "location.hpp"
 
-using string = std::string;
 
 class Request;
 class Response;
 
 class Server {
-  string                        listen_;
-  std::vector<string>           server_names_;
-  std::vector<Location>         routes_;
-  std::map<int, string>         error_pages_;
-  int                           max_body_size_;
+
+ private:
+  std::string                listen_;
+  std::vector<std::string>   server_names_;
+  std::vector<Location>      routes_;
+  std::map<int, std::string> error_pages_;
+  int                        max_body_size_;
 
  public:
   Server();
-  Server& operator=(const Server &other)  = default;
-  Server(const Server &other)             = default;
-  ~Server()                               = default;
 
-  const string&                 GetListen() const;
-  void                          SetListen(const string &listen);
-  const std::vector<string>&    GetServerNames() const;
-  bool                          FindServerName(string &name);
-  void                          AddServerName(const string &name);
-  const std::vector<Location>&  GetLocations() const;
-  const Location*               GetLocation(const string &uri) const;
+  // Setters/Getters
+  void                            SetListen(const std::string &listen);
+  const std::string&              GetListen() const;
+  const std::vector<std::string>  &GetServerNames() const;
+  const std::vector<Location>     &GetLocations() const;
+  void                            SetMaxBodySize(int max_body_size);
+  int                             GetMaxBodySize() const;
+  void                            SetErrorPage(int error_val,
+                                               std::string &error_file);
+  std::string                     GetErrorPage(int error_val) const;
+
+  // Modifiers
+  void                          AddServerName(const std::string &name);
   void                          AddLocation(const Location &new_loc);
-  string                        GetErrorPage(int error_val) const;
-  void                          SetErrorPage(int error_val, string &error_file);
-  int                           GetMaxBodySize() const;
-  void                          SetMaxBodySize(int max_body_size);
-  void                          Print() const;
-// если заданы то подтягиваем файлы, елси нет - генерим свои
 
+
+// DELETED
+//  const Location*               GetLocation(const std::string &uri) const;
+//  bool                          FindServerName(std::string &name);
+//  void                          Print() const;
+
+  // Operations
   Response*        CreateResponse(Request &request) const;
   static Response* CreateBadRequestResponse();
 
  private:
-  static Response* ResponseFromGet(Request &request, const std::string &path,
+  // Response from methods
+  static Response* ResponseFromGet([[maybe_unused]]Request &request,
+                                   const std::string &path,
                                    const Location *location);
-  static Response* ResponseFromHead(Request &request, const std::string &path,
+  static Response* ResponseFromHead([[maybe_unused]]Request &request,
+                                    const std::string &path,
                                     const Location *location);
-  static Response* ResponseFromPut(Request &request, const std::string &path,
-                                   const Location *location);
+  static Response* ResponseFromPut(Request &request,
+                                   const std::string &path,
+                                   [[maybe_unused]]const Location *location);
   static Response* ResponseFromPost(Request &request, const std::string &path,
                                     const Location *location);
-
+  // map["<method>"] = ResponseFrom<method>(...);
   static std::map
   <std::string,
   std::function<Response*(Request&, const std::string&, const Location*)> >
                                                           response_from_methods;
 
-  static Response    *GetResponseFromLocationIndex(const Location &location);
-  const Location     *FindLocation(std::string path) const;
+  // Response Utils
+  static Response    *ResponseFromLocationIndex(const Location &location);
+  static Response    *ResponseFromAutoIndex(std::string absolute_path,
+                                            std::string relative_path);
+
+  // Element Access
+  const Location *FindLocation(std::string path) const;
+
+  // Info
+  static bool MethodIsAllowed(Request &request, const Location &location);
+
+  // Utils
+  static std::string GetAbsolutePath();
+  static std::string GetAbsolutePath(const std::string &relative_path);
+  static std::string GetAbsolutePathFromLocation(Request &request,
+                                                 const Location &location);
   static std::string JoinPath(const std::string &a, const std::string &b);
-  static std::string GetRealRoot();
   static std::string FileToString(const char *filename);
   static std::string GetContentType(const std::string &filename);
+  static std::string CropFromLastSymbol(const std::string &str, char c);
+  static int         MakeDir(const char *path);
 
   static std::map<std::string, std::string> content_types;
 
  public:
+  // Exceptions
   class Exception: public std::exception {
    public:
     virtual const char* what() const throw();
+  };
+  class FileDoesNotExist {
+
+   public:
+    FileDoesNotExist() = delete;
+    FileDoesNotExist(const std::string &file_name);
+
+    virtual const char *what() const noexcept;
+
+   private:
+    std::string file_name_;
   };
 };

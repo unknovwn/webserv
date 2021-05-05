@@ -57,15 +57,16 @@ class Response {
   // Member-functions ----------------------------------------------------------
   void        AddHeader(const std::string& header, const std::string& value);
   void        AddToBody(const std::string& content);
+  void        ResizeBody(size_t new_size);
   void        ClearBody();
   std::string ToString() const;
   // ---------------------------------------------------------------------------
 
  private:
-  int                                      status_;
-  static std::map<int, std::string>        status_messages_;
-  std::map<const std::string, std::string> headers_;
-  std::string                              body_;
+  static std::map<int, std::string>         status_messages_;
+  std::map<const std::string, std::string>  headers_;
+  std::string                               body_;
+  int                                       status_;
 };
 
 std::ostream   &operator<<(std::ostream &out, Response const &response);

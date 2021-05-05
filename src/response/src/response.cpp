@@ -64,10 +64,20 @@ void Response::AddHeader(const std::string &header, const std::string &value) {
 
 void Response::AddToBody(const std::string& content) {
   body_.append(content);
+  AddHeader("Content-Length", std::to_string(body_.length()));
+}
+
+void Response::ResizeBody(size_t new_size) {
+  if (new_size >= body_.length()) {
+    return;
+  }
+  body_.resize(new_size);
+  AddHeader("Content-Length", std::to_string(body_.length()));
 }
 
 void Response::ClearBody() {
   body_.clear();
+  AddHeader("Content-Length", std::to_string(body_.length()));
 }
 
 std::string Response::ToString() const {
