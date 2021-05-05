@@ -115,7 +115,7 @@ void recieve(std::map<int,
         for (int i = 0; i < MAX_CLIENTS; i++) {
           if (client_sock[i] == 0) {
             client_sock[i] = connected_sock;
-            clients[connected_sock] = Client(CLIENT_LIFETIME, address.first);
+            clients[connected_sock] = Client(CLIENT_LIFETIME, address.first, sockfd);
             break;
           }
         }
@@ -144,7 +144,7 @@ void recieve(std::map<int,
               request = client.request_parser_.ParseRequest(buffer);
               buffer[0] = '\0';
               if (request) {
-                request->SetIpPort(sock[client_sock[i]].first);
+                request->SetIpPort(sock[client.get_sockfd()].first);
                 const Server* server = find_server(servers, *request);
                 Response* response = server->CreateResponse(*request);
                 std::string response_str = response->ToString();

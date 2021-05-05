@@ -9,8 +9,9 @@
 Client::Client()
 : request_parser_(), timer_(), lifetime_(), address_() {}
 
-Client::Client(size_t lifetime, const std::string& address)
-: request_parser_(), timer_(), lifetime_(lifetime), address_(address) {}
+Client::Client(size_t lifetime, const std::string& address, int sockfd)
+: request_parser_(), timer_(), lifetime_(lifetime), address_(address),
+  sockfd_(sockfd) {}
 
 // ---------------------------------------------------------------------------
 
@@ -22,6 +23,10 @@ void Client::set_lifetime(size_t lifetime) {
 
 const std::string& Client::get_address() const {
   return address_;
+}
+
+int Client::get_sockfd() const {
+  return sockfd_;
 }
 
 // ---------------------------------------------------------------------------

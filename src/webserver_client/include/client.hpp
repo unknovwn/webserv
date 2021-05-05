@@ -14,7 +14,7 @@ class Client {
   [[maybe_unused]] RequestParser request_parser_;
   // Constructors, destructor, operator= ---------------------------------------
   Client();
-  Client(size_t lifetime, const std::string& address);
+  Client(size_t lifetime, const std::string& address, int sockfd);
   Client(const Client& x) = default;
   ~Client() = default;
   Client& operator=(const Client& x) = default;
@@ -23,6 +23,7 @@ class Client {
   // Getters, Setters ----------------------------------------------------------
   void set_lifetime(size_t lifetime);
   const std::string& get_address() const;
+  int get_sockfd() const;
   // ---------------------------------------------------------------------------
 
   // Member-functions ----------------------------------------------------------
@@ -34,4 +35,5 @@ class Client {
   Timer             timer_;
   size_t            lifetime_;
   std::string       address_;
+  int               sockfd_;
 };
