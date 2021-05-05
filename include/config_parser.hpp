@@ -36,6 +36,7 @@ class ConfigParser {
   void ServerNameHandler(Server& server);
   void MaxBodySizeHandler(Server& server);
   void LocationHandler(Server& server);
+  void ErrorPageHandler(Server& server);
 
   void AllowedMethodsHandler(Location& location);
   void AutoindexHandler(Location& location);

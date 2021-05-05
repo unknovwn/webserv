@@ -20,6 +20,8 @@ ConfigParser::ConfigParser() {
     = &ConfigParser::MaxBodySizeHandler;
   kServerDirectiveHandlers["location"]
     = &ConfigParser::LocationHandler;
+  kServerDirectiveHandlers["error_page"]
+    = &ConfigParser::ErrorPageHandler;
 
   kLocationDirectiveHandlers["allowed_methods"]
     = &ConfigParser::AllowedMethodsHandler;
@@ -99,10 +101,11 @@ void ConfigParser::ParseLocation(Location& location) {
 }
 
 void ConfigParser::ParseServerDirective(Server& server) {
-  auto handlerIt = kServerDirectiveHandlers.find(currToken_.get_value());
+  auto directive = currToken_.get_value();
+  auto handlerIt = kServerDirectiveHandlers.find(directive);
 
   if (handlerIt == kServerDirectiveHandlers.end()) {
-    throw UnknownDirective(currToken_.get_value(), currToken_.get_line_nb());
+    throw UnknownDirective(directive, currToken_.get_line_nb());
   }
 
   NextToken();
@@ -220,6 +223,21 @@ void ConfigParser::ServerNameHandler(Server& server) {
     NextToken();
   }
   --tokensIt_;
+}
+
+void ConfigParser::ErrorPageHandler(Server& server) {
+  auto code = currToken_.get_value();
+  if (code.size() != 3 || !contains_only_digits(code)
+      || (code[0] != '4' && code[0] != '5')) {
+    throw InvalidArgument(code, currToken_.get_line_nb());
+  }
+  NextToken();
+  Expect(TokenType::kArgument);
+  auto path = currToken_.get_value();
+  if (path[0] != '/') {
+    throw InvalidArgument(path, currToken_.get_line_nb());
+  }
+  server.SetErrorPage(std::stoi(code), path);
 }
 
 void ConfigParser::MaxBodySizeHandler(Server& server) {
