@@ -24,7 +24,7 @@ ConfigParser::ConfigParser() {
   kLocationDirectiveHandlers["allowed_methods"]
     = &ConfigParser::AllowedMethodsHandler;
   kLocationDirectiveHandlers["autoindex"]
-    = &ConfigParser::AllowedMethodsHandler;
+    = &ConfigParser::AutoindexHandler;
   kLocationDirectiveHandlers["index"]
     = &ConfigParser::IndexHandler;
   kLocationDirectiveHandlers["root"]

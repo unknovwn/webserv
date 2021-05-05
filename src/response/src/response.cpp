@@ -74,7 +74,7 @@ std::string Response::ToString() const {
   std::string response_str;
 
   // Status
-  response_str.append(get_status_message() + "\r\n");
+  response_str.append("HTTP/1.1 " + get_status_message() + "\r\n");
   //Headers
   for (auto &i : get_headers()) {
     response_str.append(i.first + ": " + i.second + "\r\n");

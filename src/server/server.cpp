@@ -14,6 +14,8 @@
 
 #define MB 1048576
 
+int     print_dir(std::string path, std::string root);
+
 std::map
         <std::string,
         std::function<Response*(Request&, const std::string&,
@@ -141,9 +143,14 @@ Response* Server::CreateResponse(Request &request) const {
   auto location = FindLocation(request.GetPath());
 
   // Getting info
-  std::string full_path = GetRealRoot() + request.GetPath();
-  std::cout << full_path << std::endl;
+  size_t found_root = request.GetPath().find(GetRealRoot(), 0);
+  std::string full_path;
 
+  if (found_root == std::string::npos) {
+    full_path = GetRealRoot() + request.GetPath();
+  } else {
+    full_path = request.GetPath();
+  }
   // Call Method Handler
   return response_from_methods[request.GetMethod()](request, full_path,
                                                     location);
@@ -156,6 +163,7 @@ Response* Server::CreateBadRequestResponse() {
 Response* Server::ResponseFromGet(Request &request,
                                   const std::string &path,
                                   const Location *location = nullptr) {
+  (void)(request);
   Response    *response(nullptr);
   struct stat file_stat;
 
@@ -165,27 +173,38 @@ Response* Server::ResponseFromGet(Request &request,
     if (response) {
       return response;
     }
+    if (location->GetAutoindex()) {
+      if (print_dir(path, request.GetPath())) {
+        return new Response(Response::kNotFound);
+      }
+      response = new Response(Response::kOk);
+      response->AddToBody(FileToString("autoindex.html"));
+      response->AddHeader("Content-Length",std::to_string(
+                                                response->get_body().length()));
+      response->AddHeader("Content-Type", "text/html");
+      return response;
+    }
   }
 
-  // 404 TODO(gdrive): autoindex
-  if ((location && !location->GetIndex().empty()) ||
-      stat(path.c_str(), &file_stat)) {
-    std::cout << "404 NOT FOUND" << std::endl;
+  std::string body;
+  try {
+    body.append((FileToString(path.c_str())));
+  } catch (...) {
     return new Response(Response::kNotFound);
   }
-
-  // Response
   response = new Response(Response::kOk);
-  response->AddToBody(FileToString(path.c_str()));
+  response->AddToBody(body);
   response->AddHeader("Content-Length",std::to_string(
-                                                response->get_body().length()));
+          response->get_body().length()));
   response->AddHeader("Content-Type", GetContentType(path));
+  return response;
   return response;
 }
 
 Response* Server::ResponseFromHead(Request &request,
                                    const std::string &path,
                                    const Location *location = nullptr) {
+  (void)(request);
   Response    *response(nullptr);
   struct stat file_stat;
 
@@ -214,6 +233,7 @@ Response* Server::ResponseFromHead(Request &request,
 Response* Server::ResponseFromPut(Request &request,
                                   const std::string &path,
                                   const Location *location = nullptr) {
+  (void)(location);
   struct stat   file_stat;
   Response      *response;
 
@@ -309,17 +329,20 @@ std::string Server::GetRealRoot() {
 
 std::string Server::FileToString(const char *filename) {
   std::ifstream t(filename);
+  if (!t.is_open()) {
+    throw (std::string ("not found"));
+  }
   std::string   str((std::istreambuf_iterator<char>(t)),
                     std::istreambuf_iterator<char>());
 
-  return std::move(str);
+  return str;
 }
 
 std::string Server::GetContentType(const std::string &filename) {
   size_t found_index = filename.rfind('.');
 
   if (found_index == std::string::npos) {
-    return std::move(std::string("text/plain"));
+    return std::string("text/plain");
   }
   std::string ext(filename.substr(found_index));
   std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
