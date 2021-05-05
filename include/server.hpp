@@ -42,7 +42,8 @@ class Server {
   void                          Print() const;
 // если заданы то подтягиваем файлы, елси нет - генерим свои
 
-  Response* CreateResponse(Request &request) const;
+  Response*        CreateResponse(Request &request) const;
+  static Response* CreateBadRequestResponse();
 
  private:
   static Response* ResponseFromGet(Request &request, const std::string &path,

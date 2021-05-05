@@ -149,6 +149,10 @@ Response* Server::CreateResponse(Request &request) const {
                                                     location);
 }
 
+Response* Server::CreateBadRequestResponse() {
+  return new Response(Response::kBadRequest);
+}
+
 Response* Server::ResponseFromGet(Request &request,
                                   const std::string &path,
                                   const Location *location = nullptr) {

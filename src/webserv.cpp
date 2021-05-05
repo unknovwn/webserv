@@ -23,8 +23,8 @@
 #define MAX_CLIENTS 1024
 #define CLIENT_LIFETIME 60
 
-Server* find_server(const std::vector<Server>& servers, const Request& request) {
-  std::vector<Server*> friendly;
+const Server* find_server(const std::vector<Server>& servers, const Request& request) {
+  std::vector<const Server*> friendly;
   size_t num_of_matches = 0;
 
   for (const auto& cur : servers) {
@@ -40,7 +40,7 @@ Server* find_server(const std::vector<Server>& servers, const Request& request) 
           request.Find_GetH_Opt("Host")) != serv_names.end())
       return cur;
   }
-  return friendly[0];
+  return friendly.at(0);
 }
 
 void recieve(std::map<int,
@@ -145,7 +145,7 @@ void recieve(std::map<int,
               buffer[0] = '\0';
               if (request) {
                 request->SetIpPort(sock[client_sock[i]].first);
-                Server* server = find_server(servers, *request);
+                const Server* server = find_server(servers, *request);
                 Response* response = server->CreateResponse(*request);
                 std::string response_str = response->ToString();
                 send(client_sock[i], response_str.c_str(),
@@ -154,7 +154,8 @@ void recieve(std::map<int,
               }
             } while (!client.request_parser_.Empty());
           } catch (RequestParser::BadRequest& e) {
-            Response response = Server::CreateBadRequest();
+            std::unique_ptr<Response> response(
+                                            Server::CreateBadRequestResponse());
             std::string response_str = response->ToString();
             send(client_sock[i], response_str.c_str(),
                 response_str.length(), 0);
