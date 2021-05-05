@@ -130,8 +130,12 @@ void recieve(std::map<int,
             /* std::cout << buffer; */
             do {
               request = client.request_parser_.ParseRequest(buffer);
+              buffer[0] = '\0';
               if (request) {
                 std::string response_str("Request parsed\r\n");
+                std::unique_ptr<Response> response(
+                                           servers[0].CreateResponse(*request));
+                std::cout << *response << std::endl;
                 /* Server& server = find_server(client.get_address()); */
                 /* Response response = server.CreateResponse(*request); */
                 /* std::string response_str = response.ToString(); */
