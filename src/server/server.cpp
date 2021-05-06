@@ -181,6 +181,9 @@ Response* Server::ResponseFromGet([[maybe_unused]] Request &request,
     body.append((FileToString(path.c_str())));
   } catch (FileDoesNotExist & e) {
     // TODO(gdrive): error page
+    if (location && location->GetAutoindex()) {
+      return ResponseFromAutoIndex(path, path);
+    }
     return new Response(Response::kNotFound);
   }
   auto response = new Response(Response::kOk);
@@ -262,6 +265,9 @@ Response *Server::ResponseFromLocationIndex(const Location &location) {
     return true;});
 
   if (index == indexes.end()) {
+    if (location.GetAutoindex()) {
+      return ResponseFromAutoIndex(root, root);
+    }
     throw FileDoesNotExist("index files");
   }
   auto response = new Response(Response::kOk);
@@ -292,9 +298,6 @@ const Location* Server::FindLocation(std::string path) const {
                                 [&path](const Location& l) {
     bool equal = l.GetUri().compare(0, l.GetUri().length(),
                               path, 0, l.GetUri().length()) == 0;
-    if (equal && path.length() > l.GetUri().length()) {
-      return path.at(l.GetUri().length()) == '/';
-    }
     return equal;
   });
   return location == routes_.rend() ? nullptr : &(*location);
@@ -347,7 +350,15 @@ std::string Server::JoinPath(const std::string &a, const std::string &b) {
   return a + b;
 }
 
-std::string Server::FileToString(const char *filename) {
+std::string Server::FileToString(const std::string &filename) {
+  struct stat file_stat;
+
+  if (filename.back() == '/' || stat(filename.c_str(), &file_stat)) {
+    throw FileDoesNotExist(filename);
+  }
+  if (S_ISDIR(file_stat.st_mode)) {
+    throw FileDoesNotExist(filename);
+  }
   std::ifstream file(filename);
 
   if (!file.is_open()) {

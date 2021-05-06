@@ -86,7 +86,7 @@ class Server {
   static std::string GetAbsolutePathFromLocation(Request &request,
                                                  const Location &location);
   static std::string JoinPath(const std::string &a, const std::string &b);
-  static std::string FileToString(const char *filename);
+  static std::string FileToString(const std::string &filename);
   static std::string GetContentType(const std::string &filename);
   static std::string CropFromLastSymbol(const std::string &str, char c);
   static int         MakeDir(const char *path);
