@@ -168,11 +168,16 @@ Response* Server::CreateBadRequestResponse() {
 Response* Server::ResponseFromGet([[maybe_unused]] Request &request,
                                   const std::string &path,
                                   const Location *location = nullptr) {
-  if (location && !location->GetIndex().empty()) {
+  if (location && (IsDir(path.c_str()) || (path.find(location->GetUri()) != std::string::npos))) {
     try {
-      return ResponseFromLocationIndex(*location);
+      return ResponseFromLocationIndex(*location, path);
     } catch (FileDoesNotExist &e) {
+      if (location->GetAutoindex()) {
+        return ResponseFromAutoIndex(path, path);
+      }
       std::cerr << e.what() << std::endl;
+      // TODO(gdrive): error page
+      return new Response(Response::kNotFound);
     }
   }
   std::string body;
@@ -180,10 +185,8 @@ Response* Server::ResponseFromGet([[maybe_unused]] Request &request,
   try {
     body.append((FileToString(path.c_str())));
   } catch (FileDoesNotExist & e) {
+//    std::cout << e.what() << std::endl;
     // TODO(gdrive): error page
-    if (location && location->GetAutoindex()) {
-      return ResponseFromAutoIndex(path, path);
-    }
     return new Response(Response::kNotFound);
   }
   auto response = new Response(Response::kOk);
@@ -208,7 +211,7 @@ Response* Server::ResponseFromPut(Request &request,
   struct stat   file_stat;
   Response      *response;
 
-  MakeDir(CropFromLastSymbol(path, '/').c_str());
+//  MakeDir(CropFromLastSymbol(path, '/').c_str());
   if (stat(path.c_str(), &file_stat)) {
     response = new Response(Response::kCreated);
     response->AddHeader("Content-Location", path);
@@ -224,8 +227,8 @@ Response* Server::ResponseFromPut(Request &request,
     return new Response(Response::kForbidden);
   }
   // Response
-  stat(path.c_str(), &file_stat);
-  file.write(request.GetBody().c_str(), request.GetBody().length());
+//  file.write(request.GetBody().c_str(), request.GetBody().length());
+  file << request.GetBody();
   response->AddHeader("Content-Length", std::to_string(file_stat.st_size));
   response->AddHeader("Content-Type", GetContentType(path));
   file.close();
@@ -246,33 +249,35 @@ Response *Server::ResponseFromPost(Request &request, const std::string &path,
 }
 
 // Response Utils
-Response *Server::ResponseFromLocationIndex(const Location &location) {
+Response *Server::ResponseFromLocationIndex(const Location &location,
+                                            const std::string &path) {
   struct stat file_stat;
-  std::string root;
+//  std::string root;
   auto        indexes(location.GetIndex());
 
-  if (!location.GetRoot().empty()) {
-    root = JoinPath(GetAbsolutePath(), location.GetRoot());
-  } else {
-    root = JoinPath(GetAbsolutePath(), location.GetUri());
-  }
+//  if (!location.GetRoot().empty()) {
+//    root = JoinPath(GetAbsolutePath(), location.GetRoot());
+//  } else {
+//    root = JoinPath(GetAbsolutePath(), location.GetUri());
+//  }
+
   auto index = std::find_if(indexes.begin(), indexes.end(),
                [&](const std::string &index) {
-    std::string path(JoinPath(root, index));
-    if (stat(path.c_str(), &file_stat)) {
+    std::string index_path(JoinPath(path, index));
+    if (stat(index_path.c_str(), &file_stat)) {
       return false;
     }
     return true;});
 
   if (index == indexes.end()) {
     if (location.GetAutoindex()) {
-      return ResponseFromAutoIndex(root, root);
+      return ResponseFromAutoIndex(path, path);
     }
     throw FileDoesNotExist("index files");
   }
   auto response = new Response(Response::kOk);
 
-  response->AddToBody(FileToString(JoinPath(root, index->c_str()).c_str()));
+  response->AddToBody(FileToString(JoinPath(path, index->c_str()).c_str()));
   response->AddHeader("Content-Type", GetContentType(*index));
   return response;
 }
@@ -292,12 +297,12 @@ Response *Server::ResponseFromAutoIndex(std::string absolute_path,
 }
 
 // Element Access
-const Location* Server::FindLocation(std::string path) const {
+const Location* Server::FindLocation(const std::string &path) const {
   auto location =  std::find_if(routes_.rbegin(),
                                 routes_.rend(),
                                 [&path](const Location& l) {
-    bool equal = l.GetUri().compare(0, l.GetUri().length(),
-                              path, 0, l.GetUri().length()) == 0;
+    bool equal = l.GetUri().compare(0, l.GetUri().length() - 1,
+                              path, 0, l.GetUri().length() - 1) == 0;
     return equal;
   });
   return location == routes_.rend() ? nullptr : &(*location);
@@ -328,13 +333,20 @@ std::string Server::GetAbsolutePath(const std::string &relative_path) {
 
 std::string Server::GetAbsolutePathFromLocation(Request &request,
                                                 const Location &location) {
-  if (location.GetRoot().empty()) {
-    return GetAbsolutePath(request.GetPath());
+  std::string location_uri(location.GetUri());
+
+  if (location_uri.length() > 1 && location_uri.back() == '/') {
+    location_uri.pop_back();
   }
-  std::string absolute_path(
-                          request.GetPath().substr(location.GetUri().length()));
-  absolute_path = JoinPath(location.GetRoot(), absolute_path);
-  return GetAbsolutePath(absolute_path);
+  std::string path(request.GetPath());
+  size_t found = path.find(location_uri);
+
+  path.erase(found, location_uri.length());
+  if (!location.GetRoot().empty()) {
+    path = JoinPath(location.GetRoot(), path);
+    return GetAbsolutePath(path);
+  }
+  return GetAbsolutePath(path);
 }
 
 std::string Server::JoinPath(const std::string &a, const std::string &b) {
@@ -381,7 +393,7 @@ std::string Server::GetContentType(const std::string &filename) {
   std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
   auto type = content_types.find(ext);
 
-  return type == content_types.end() ? "" : content_types[ext];
+  return type == content_types.end() ? "text/plain" : content_types[ext];
 }
 
 std::string Server::CropFromLastSymbol(const std::string &str, char c) {
@@ -395,6 +407,19 @@ std::string Server::CropFromLastSymbol(const std::string &str, char c) {
 
 int Server::MakeDir(const char *path) {
   return mkdir(path, 0755);
+}
+
+bool Server::IsDir(const std::string &path) {
+  struct stat file_stat;
+
+  stat(path.c_str(), &file_stat);
+  return S_ISDIR(file_stat.st_mode) != 0;
+}
+
+bool Server::FileExist(const std::string &path) {
+  struct stat file_stat;
+
+  return stat(path.c_str(), &file_stat) == 0;
 }
 
 // Exceptions

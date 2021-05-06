@@ -70,12 +70,14 @@ class Server {
                                                           response_from_methods;
 
   // Response Utils
-  static Response    *ResponseFromLocationIndex(const Location &location);
+  static Response    *ResponseFromLocationIndex(const Location &location,
+                                                const std::string &path);
   static Response    *ResponseFromAutoIndex(std::string absolute_path,
                                             std::string relative_path);
+  static Response    *Response404();
 
   // Element Access
-  const Location *FindLocation(std::string path) const;
+  const Location *FindLocation(const std::string &path) const;
 
   // Info
   static bool MethodIsAllowed(Request &request, const Location &location);
@@ -90,6 +92,8 @@ class Server {
   static std::string GetContentType(const std::string &filename);
   static std::string CropFromLastSymbol(const std::string &str, char c);
   static int         MakeDir(const char *path);
+  static bool        IsDir(const std::string &path);
+  static bool        FileExist(const std::string &path);
 
   static std::map<std::string, std::string> content_types;
 

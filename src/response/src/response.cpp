@@ -32,7 +32,9 @@ std::map<int, std::string> Response::status_messages_ = {
 
 // Constructors, destructor, operator= -----------------------------------------
 
-Response::Response(int status) : status_(status) {}
+Response::Response(int status) : status_(status) {
+  AddHeader("Content-Length", "0");
+}
 
 // -----------------------------------------------------------------------------
 

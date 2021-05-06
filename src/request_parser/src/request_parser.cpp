@@ -71,8 +71,10 @@ Request* RequestParser::ParseRequest() {
 }
 
 Request* RequestParser::ParseRequest(const std::string& request) {
-  if (state_ == State::kMethodState && save_buffer_.empty() &&
-      RequestParser::IsSpaces(request)) {
+  if (state_ == State::kMethodState && save_buffer_.empty() && (RequestParser::IsSpaces(request) || request.empty())) {
+    if (processing_str_.size() == 1 && processing_str_.back() == '\n') {
+      processing_str_.clear();
+    }
     return nullptr;
   }
   processing_str_.append(request);
