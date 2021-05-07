@@ -156,7 +156,7 @@ Response* Server::CreateResponse(Request &request) const {
   auto response = response_from_methods[request.GetMethod()](request,
                                                              absolute_path,
                                                              location);
-  response->ResizeBody(GetMaxBodySize());
+//  response->ResizeBody(GetMaxBodySize());
   return response;
 }
 

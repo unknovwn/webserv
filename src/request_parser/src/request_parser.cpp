@@ -132,6 +132,9 @@ Request* RequestParser::ParseRequest(const std::string& request) {
     }
     Request* save = this->CloneRequest();
     this->Refresh();
+    if (processing_str_.size() == 1 && processing_str_.back() == '\n') {
+      processing_str_.pop_back();
+    }
     return save;
   }
   return nullptr;
@@ -222,7 +225,14 @@ const char* RequestParser::BadRequest::what() const noexcept {
 // Request operations --------------------------------------------------------
 
 void RequestParser::CallMethodHandler(const std::string &func_key) {
-  auto func_pos(methods_handler_.find(func_key));
+  std::string k(func_key);
+
+  if (k[0] == '\r' && k[1] == '\n') {
+    k.erase(0, 2);
+  } else if (k[0] == '\n') {
+    k.erase(0, 1);
+  }
+  auto func_pos(methods_handler_.find(k));
 
   if (func_pos == methods_handler_.end()) {
     throw BadRequest();
@@ -254,7 +264,8 @@ void     RequestParser::HandleMethod() {
   if (found_index == std::string::npos) {
     this->ProcessingStrToBuffer();
     if (save_buffer_.find('\n') != std::string::npos) {
-      throw BadRequest();
+      save_buffer_.clear();
+//      throw BadRequest();
     }
     return;
   }
@@ -398,9 +409,9 @@ void     RequestParser::HandleChunkedBody() {
     word.pop_back();
   }
   save_buffer_.append(word);
-  if (save_buffer_.size() != chunked_content_length_) {
-    throw BadRequest();
-  }
+//  if (save_buffer_.size() != chunked_content_length_) {
+//    throw BadRequest();
+//  }
   save_buffer_.append("\n");
   this->HandleBody(save_buffer_);
   this->SetNextChunkedState();
@@ -422,6 +433,9 @@ void     RequestParser::HandleChunkedContentLength() {
     word.pop_back();
   }
   save_buffer_.append(word);
+  if (save_buffer_.back() == '\r') {
+    save_buffer_.pop_back();
+  }
   if (!RequestParser::IsHexNumbers(save_buffer_)) {
     throw BadRequest();
   }

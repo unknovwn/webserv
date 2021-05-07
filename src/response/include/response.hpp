@@ -52,11 +52,13 @@ class Response {
                                                const std::string& header) const;
   [[nodiscard]] const std::string& get_body() const;
   const std::map<const std::string, std::string> &get_headers() const;
+  const std::string                &GetCgiResponse() const;
   // ---------------------------------------------------------------------------
 
   // Member-functions ----------------------------------------------------------
   void        AddHeader(const std::string& header, const std::string& value);
   void        AddToBody(const std::string& content);
+  void        SetCgiResponse(const std::string &cgi_response);
   void        ResizeBody(size_t new_size);
   void        ClearBody();
   std::string ToString() const;
@@ -66,6 +68,7 @@ class Response {
   static std::map<int, std::string>         status_messages_;
   std::map<const std::string, std::string>  headers_;
   std::string                               body_;
+  std::string                               cgi_response_;
   int                                       status_;
 };
 

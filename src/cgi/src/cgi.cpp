@@ -53,8 +53,33 @@ Response Cgi::CreateResponse(Request &request) {
   Cgi::Free2DMatrix<char>(env);
 
   // TODO(gdrive): Need parse response_str --> class Response
+
+  response_str.erase(0, 7);
+  for (size_t i = 0; i < response_str.size(); ++i) {
+    if (response_str[i] == '\r') {
+      response_str.insert(i + 1, "\n");
+      if (response_str[i - 1] == '\n') {
+        break;
+      }
+      ++i;
+    }
+  }
+  std::string body = response_str.substr(response_str.find("\r\n\r\n") + 4);
+  std::string content_length;
+  if (body.size() > 100000000)
+  {
+    content_length = std::string("content-length: ") + "100000000";
+    body.resize(100000000);
+  } else {
+    content_length = "content-length: " + std::to_string(body.size());
+  }
+
+  response_str = "HTTP/1.1" + response_str.substr(0, response_str.find("\r\n\r\n")) + "\r\n" + content_length + "\r\n\r\n" + body;
+
+
+
   Response response(Response::StatusCodes::kOk);
-  response.AddToBody(response_str);
+  response.SetCgiResponse(response_str);
   return response;
 }
 
@@ -80,8 +105,7 @@ char **Cgi::CreateEnv(Request &request) const {
   env["REMOTE_USER"]  = env["AUTH_TYPE"] == "Basic" ? "16key" : "";
   env["REMOTE_IDENT"] = env["AUTH_TYPE"] == "Basic" ? "16key" : "";
 
-  env["CONTENT_LENGTH"] = headers.count("Content-Length")
-                         ? headers["Content-Length"] : "";
+  env["CONTENT_LENGTH"] = std::to_string(request.GetBody().length());
 
   env["CONTENT_TYPE"] = headers.count("Content-Type")
                         ? headers["Content-Type"] : "";
@@ -131,12 +155,16 @@ char **Cgi::CreateEnv(Request &request) const {
 
   // env[HTTP_HEADER_HEADER] = value --> [HTTP_HEADER_HEADER]=value
   char **env_result = static_cast<char**>(malloc(sizeof(char*)
-                                                 * (env.size() + 1)));
+                                                 * (env.size() + headers.size() + 1)));
   if (!env_result) {
     throw Cgi::ResourceError();
   }
   size_t i = 0;
   for (auto &it : headers) {
+    env_result[i] = strdup(std::string(it.first + "=" + it.second).c_str());
+    ++i;
+  }
+  for (auto &it : env) {
     env_result[i] = strdup(std::string(it.first + "=" + it.second).c_str());
     ++i;
   }

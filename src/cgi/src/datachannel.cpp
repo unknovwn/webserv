@@ -22,7 +22,7 @@ DataChannel::~DataChannel() {
 // Modifiers
 void DataChannel::PutData(const char *data) {
   std::ofstream out(file_name_,
-                    std::ofstream::out | std::ofstream::trunc);
+                    std::ofstream::out);
   if (out.is_open()) {
     out << data;
   }

@@ -97,6 +97,14 @@ std::string Response::ToString() const {
   return response_str;
 }
 
+void Response::SetCgiResponse(const std::string &cgi_response) {
+  cgi_response_ = cgi_response;
+}
+
+const std::string &Response::GetCgiResponse() const {
+  return cgi_response_;
+}
+
 // -----------------------------------------------------------------------------
 
 std::ostream &operator<<(std::ostream &out, const Response &response) {
