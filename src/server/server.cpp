@@ -229,7 +229,7 @@ Response* Server::ResponseFromPut(Request &request,
   // Response
 //  file.write(request.GetBody().c_str(), request.GetBody().length());
   file << request.GetBody();
-  response->AddHeader("Content-Length", std::to_string(file_stat.st_size));
+  response->AddHeader("Content-Length", "0");
   response->AddHeader("Content-Type", GetContentType(path));
   file.close();
   return response;
@@ -241,8 +241,12 @@ Response *Server::ResponseFromPost(Request &request, const std::string &path,
 
   if (!location || dot == std::string::npos ||
       path.substr(dot) != location->GetCgiExtension()) {
+    if (request.GetBody().size() > 100) {
+      return new Response(Response::kPayloadTooLarge);
+    }
     return new Response(Response::kOk);
   }
+
   Cgi cgi(location->GetCgiPath());
 
   return new Response(cgi.CreateResponse(request));

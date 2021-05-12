@@ -19,11 +19,12 @@
 #include "cgi.hpp"
 #include "request.hpp"
 
-#define BUFFER_SIZE 4096
-#define MAX_CLIENTS 1024
-#define CLIENT_LIFETIME 60
+#define BUFFER_SIZE 32768
+#define MAX_CLIENTS 1000
+#define CLIENT_LIFETIME 100000
 
-const Server* find_server(const std::vector<Server>& servers, const Request& request) {
+const Server* find_server(const std::vector<Server>& servers,
+                          const Request& request) {
   std::vector<const Server*> friendly;
   size_t num_of_matches = 0;
 
@@ -46,11 +47,9 @@ const Server* find_server(const std::vector<Server>& servers, const Request& req
 void recieve(std::map<int,
     std::pair<std::string, struct sockaddr_in> >& sock,
     const std::vector<Server>& servers) {
-  std::ostringstream ss;
-  std::ostringstream body;
   int  count;
   int  select_ret;
-  char buffer[BUFFER_SIZE];
+  char buffer[BUFFER_SIZE + 1];
   int  client_sock[MAX_CLIENTS];
   fd_set rfds;
   std::map<int, Client> clients;
@@ -129,11 +128,11 @@ void recieve(std::map<int,
           std::cerr << "Recv error" << std::endl;
           exit(EXIT_FAILURE);
         }
-        if (count == 0 || (count == 1 && buffer[0] == 4)) {
-          close(client_sock[i]);
-          client_sock[i] = 0;
-          clients.erase(client_sock[i]);
-        } else {
+//        if (count == 0 || (count == 1 && buffer[0] == 4)) {
+//          close(client_sock[i]);
+//          client_sock[i] = 0;
+//          clients.erase(client_sock[i]);
+//        } else {
           buffer[count] = '\0';
           Client& client = clients[client_sock[i]];
           client.ResetTimer();
@@ -147,10 +146,20 @@ void recieve(std::map<int,
                 request->SetIpPort(sock[client.get_sockfd()].first);
                 const Server* server = find_server(servers, *request);
                 Response* response = server->CreateResponse(*request);
-                std::string response_str = response->ToString();
+                if (response->get_status_message() == "413 Payload Too Large") {
+                  std::cout << request->GetBody().length() << std::endl;
+                  std::cout << request->GetBody();
+                }
+                std::string response_str;
+                if (!response->GetCgiResponse().empty()) {
+                  response_str = response->GetCgiResponse();
+                } else {
+                  response_str = response->ToString();
+                }
                 send(client_sock[i], response_str.c_str(),
                     response_str.length(), 0);
                 delete request;
+                delete response;
               }
             } while (!client.request_parser_.Empty());
           } catch (RequestParser::BadRequest& e) {
@@ -163,7 +172,7 @@ void recieve(std::map<int,
             client_sock[i] = 0;
             clients.erase(client_sock[i]);
           }
-        }
+//        }
       }
     }
   }
