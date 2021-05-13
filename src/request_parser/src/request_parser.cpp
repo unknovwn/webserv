@@ -77,7 +77,7 @@ RequestParser &RequestParser::operator=(const RequestParser &other) {
 
 Request *RequestParser::ParseRequest(const std::string &request_str = "") {
   process_str_.append(request_str);
-  if (state_ == State::kMethodState) {
+  if (state_ == State::kMethodState && saver_.empty()) {
     LeftSpaceTrim(process_str_);
   }
   while (state_ != State::kRequestIsReady && !process_str_.empty()) {
