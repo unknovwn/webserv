@@ -20,7 +20,7 @@
 #include "request.hpp"
 
 #define BUFFER_SIZE 32768
-#define MAX_CLIENTS 1000
+#define MAX_CLIENTS 512
 #define CLIENT_LIFETIME 300
 
 const Server* find_server(const std::vector<Server>& servers,
@@ -129,41 +129,46 @@ void recieve(std::map<int,
           std::cerr << "Recv error" << std::endl;
           continue;
         }
-          buffer[count] = '\0';
-          Client& client = clients[client_sock[i]];
-          client.ResetTimer();
+        if (count == 0 || (count == 1 && buffer[0] == 4)) {
+          close(client_sock[i]);
+          client_sock[i] = 0;
+          clients.erase(client_sock[i]);
+        }
+        buffer[count] = '\0';
+        Client& client = clients[client_sock[i]];
+        client.ResetTimer();
 
-          Request* request;
-          try {
-            do {
-              request = client.request_parser_.ParseRequest(buffer);
-              buffer[0] = '\0';
-              if (request) {
-                request->SetIpPort(sock[client.get_sockfd()].first);
-                const Server* server = find_server(servers, *request);
-                Response* response = server->CreateResponse(*request);
-                std::string response_str;
-                if (!response->GetCgiResponse().empty()) {
-                  response_str = response->GetCgiResponse();
-                } else {
-                  response_str = response->ToString();
-                }
-                send(client_sock[i], response_str.c_str(),
-                    response_str.length(), 0);
-                delete request;
-                delete response;
+        Request* request;
+        try {
+          do {
+            request = client.request_parser_.ParseRequest(buffer);
+            buffer[0] = '\0';
+            if (request) {
+              request->SetIpPort(sock[client.get_sockfd()].first);
+              const Server* server = find_server(servers, *request);
+              Response* response = server->CreateResponse(*request);
+              std::string response_str;
+              if (!response->GetCgiResponse().empty()) {
+                response_str = response->GetCgiResponse();
+              } else {
+                response_str = response->ToString();
               }
-            } while (!client.request_parser_.Empty());
-          } catch (RequestParser::BadRequest& e) {
-            std::unique_ptr<Response> response(servers[0]
-                .CreateBadRequestResponse());
-            std::string response_str = response->ToString();
-            send(client_sock[i], response_str.c_str(),
-                response_str.length(), 0);
-            close(client_sock[i]);
-            client_sock[i] = 0;
-            clients.erase(client_sock[i]);
-          }
+              send(client_sock[i], response_str.c_str(),
+                  response_str.length(), 0);
+              delete request;
+              delete response;
+            }
+          } while (!client.request_parser_.Empty());
+        } catch (RequestParser::BadRequest& e) {
+          std::unique_ptr<Response> response(servers[0]
+              .CreateBadRequestResponse());
+          std::string response_str = response->ToString();
+          send(client_sock[i], response_str.c_str(),
+              response_str.length(), 0);
+          close(client_sock[i]);
+          client_sock[i] = 0;
+          clients.erase(client_sock[i]);
+        }
       }
     }
   }
