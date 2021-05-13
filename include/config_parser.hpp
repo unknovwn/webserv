@@ -35,6 +35,7 @@ class ConfigParser {
   int  ParsePort(const std::string& port);
   void ServerNameHandler(Server& server);
   void LocationHandler(Server& server);
+  void ErrorPageHandler(Server& server);
 
   void AllowedMethodsHandler(Location& location);
   void AutoindexHandler(Location& location);
