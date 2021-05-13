@@ -16,8 +16,6 @@ ConfigParser::ConfigParser() {
     = &ConfigParser::ListenHandler;
   kServerDirectiveHandlers["server_name"]
     = &ConfigParser::ServerNameHandler;
-  kServerDirectiveHandlers["max_body_size"]
-    = &ConfigParser::MaxBodySizeHandler;
   kServerDirectiveHandlers["location"]
     = &ConfigParser::LocationHandler;
 
@@ -35,6 +33,8 @@ ConfigParser::ConfigParser() {
     = &ConfigParser::CgiExtensionHandler;
   kLocationDirectiveHandlers["cgi_path"]
     = &ConfigParser::CgiPathHandler;
+  kLocationDirectiveHandlers["max_body_size"]
+    = &ConfigParser::MaxBodySizeHandler;
 }
 
 ConfigParser& ConfigParser::GetInstance() {
@@ -222,14 +222,6 @@ void ConfigParser::ServerNameHandler(Server& server) {
   --tokensIt_;
 }
 
-void ConfigParser::MaxBodySizeHandler(Server& server) {
-  auto arg = currToken_.get_value();
-  if (!(contains_only_digits(arg))) {
-    throw InvalidArgument(arg, currToken_.get_line_nb());
-  }
-  server.SetMaxBodySize(std::stoi(arg));
-}
-
 void ConfigParser::LocationHandler(Server& server) {
   std::string uri  = currToken_.get_value();
   int         line = currToken_.get_line_nb();
@@ -294,6 +286,14 @@ void ConfigParser::CgiExtensionHandler(Location& location) {
 
 void ConfigParser::CgiPathHandler(Location& location) {
   location.SetCgiPath(currToken_.get_value());
+}
+
+void ConfigParser::MaxBodySizeHandler(Location& location) {
+  auto arg = currToken_.get_value();
+  if (!(contains_only_digits(arg))) {
+    throw InvalidArgument(arg, currToken_.get_line_nb());
+  }
+  location.SetMaxBodySize(std::stoi(arg));
 }
 
 

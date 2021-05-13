@@ -20,7 +20,6 @@ class Server {
   std::vector<std::string>   server_names_;
   std::vector<Location>      routes_;
   std::map<int, std::string> error_pages_;
-  int                        max_body_size_;
 
  public:
   Server();
@@ -30,8 +29,6 @@ class Server {
   const std::string&              GetListen() const;
   const std::vector<std::string>  &GetServerNames() const;
   const std::vector<Location>     &GetLocations() const;
-  void                            SetMaxBodySize(int max_body_size);
-  int                             GetMaxBodySize() const;
   void                            SetErrorPage(int error_val,
                                                std::string &error_file);
   std::string                     GetErrorPage(int error_val) const;

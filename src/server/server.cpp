@@ -12,9 +12,7 @@
 #include "request.hpp"
 #include "cgi.hpp"
 
-#define MB 1048576
-
-int     print_dir(std::string path, std::string root);
+bool print_dir(std::string& path, std::string& root);
 
 std::map
         <std::string,
@@ -38,7 +36,7 @@ std::map<std::string, std::string> Server::content_types = {
 };
 
 Server::Server()
-  :listen_("127.0.0.1:80"), server_names_(), max_body_size_(1 * MB) {
+  :listen_("127.0.0.1:80"), server_names_() {
   server_names_.emplace_back("intra42.fr");
 }
 //=============================== LISTEN =======================================
@@ -60,13 +58,6 @@ void Server::SetErrorPage(int error_val, string &error_file) {
   if ((*it).first == error_val)
     throw Server::Exception();
   error_pages_.insert(std::pair<int, string>(error_val, error_file));
-}
-//============================== MAX BODY SIZE =================================
-int Server::GetMaxBodySize() const {
-  return this->max_body_size_;
-}
-void Server::SetMaxBodySize(int max_body_size) {
-  this->max_body_size_ = max_body_size;
 }
 //=============================== SERV NAME ====================================
 const std::vector<string> &Server::GetServerNames() const {
@@ -241,7 +232,7 @@ Response *Server::ResponseFromPost(Request &request, const std::string &path,
 
   if (!location || dot == std::string::npos ||
       path.substr(dot) != location->GetCgiExtension()) {
-    if (request.GetBody().size() > 100) {
+    if (request.GetBody().size() > location->GetMaxBodySize()) {
       return new Response(Response::kPayloadTooLarge);
     }
     return new Response(Response::kOk);
@@ -249,7 +240,7 @@ Response *Server::ResponseFromPost(Request &request, const std::string &path,
 
   Cgi cgi(location->GetCgiPath());
 
-  return new Response(cgi.CreateResponse(request));
+  return new Response(cgi.CreateResponse(request, location->GetMaxBodySize()));
 }
 
 // Response Utils
@@ -288,7 +279,7 @@ Response *Server::ResponseFromLocationIndex(const Location &location,
 
 Response *Server::ResponseFromAutoIndex(std::string absolute_path,
                                         std::string relative_path) {
-  if (print_dir(absolute_path, relative_path)) {
+  if (!print_dir(absolute_path, relative_path)) {
     return new Response(Response::kNotFound);
   }
   auto response = new Response(Response::kOk);

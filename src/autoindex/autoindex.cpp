@@ -9,14 +9,13 @@ bool   fileExists(const std::string &file) {
   return (stat(file.c_str(), &buff) == 0);
 }
 
-void    print_dir(std::string &path, std::string &root) {
+bool   print_dir(std::string &path, std::string &root) {
   DIR *dir;
   struct dirent *entry;
 
   dir = opendir(path.c_str());   // достаем из string - char *
   if (!dir) {
-    std::cerr << "Cannot open this directory" << std::endl;
-    return;
+    return false;
   }
 
   if (path.back() != '/')   // if u put PATH without end '/'
@@ -50,4 +49,5 @@ void    print_dir(std::string &path, std::string &root) {
   out.close();
 
   closedir(dir);
+  return true;
 }

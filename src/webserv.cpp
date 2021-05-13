@@ -146,10 +146,6 @@ void recieve(std::map<int,
                 request->SetIpPort(sock[client.get_sockfd()].first);
                 const Server* server = find_server(servers, *request);
                 Response* response = server->CreateResponse(*request);
-                if (response->get_status_message() == "413 Payload Too Large") {
-                  std::cout << request->GetBody().length() << std::endl;
-                  std::cout << request->GetBody();
-                }
                 std::string response_str;
                 if (!response->GetCgiResponse().empty()) {
                   response_str = response->GetCgiResponse();

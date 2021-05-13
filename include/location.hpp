@@ -15,6 +15,7 @@ class Location {
   string                          upload_dir_;
   string                          cgi_extension_;
   string                          cgi_path_;
+  size_t                          max_body_size_ = 1048576;
 
  public:
   Location()                                  = default;
@@ -38,6 +39,8 @@ class Location {
   void                            SetCgiExtension(const string& cgi_extension);
   const string&                   GetCgiPath() const;
   void                            SetCgiPath(const string& cgi_path);
+  void                            SetMaxBodySize(size_t max_body_size);
+  size_t                          GetMaxBodySize() const;
   void                            Print() const;
 
   class Exception: public std::exception {   // пока не нужно, оставлю

@@ -34,7 +34,6 @@ class ConfigParser {
   bool isHostValid(const std::string& host);
   int  ParsePort(const std::string& port);
   void ServerNameHandler(Server& server);
-  void MaxBodySizeHandler(Server& server);
   void LocationHandler(Server& server);
 
   void AllowedMethodsHandler(Location& location);
@@ -44,6 +43,7 @@ class ConfigParser {
   void SaveDirectoryHandler(Location& location);
   void CgiExtensionHandler(Location& location);
   void CgiPathHandler(Location& location);
+  void MaxBodySizeHandler(Location& location);
 
  public:
   class ConfigError {

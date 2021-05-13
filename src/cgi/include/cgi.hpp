@@ -20,7 +20,7 @@ class Cgi {
   explicit Cgi(std::string cgi_bin_path);
 
   // Operations
-  Response CreateResponse(Request &request);
+  Response CreateResponse(Request &request, size_t max_body_size);
 
   [[nodiscard]] char **CreateArgs() const;
   char **CreateEnv(Request &request) const;

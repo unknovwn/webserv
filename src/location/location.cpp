@@ -57,6 +57,13 @@ const string& Location::GetCgiPath() const {
 void Location::SetCgiPath(const string& cgi_path) {
   cgi_path_ = cgi_path;
 }
+//============================== MAX BODY SIZE =================================
+size_t Location::GetMaxBodySize() const {
+  return this->max_body_size_;
+}
+void Location::SetMaxBodySize(size_t max_body_size) {
+  this->max_body_size_ = max_body_size;
+}
 //================================= PRINT ======================================
 void Location::Print() const {
   std::cout << "uri: " << uri_ << std::endl;
@@ -86,6 +93,7 @@ bool Location::operator==(const Location &other) const {
   index_ == other.index_ &&
   autoindex_ == other.autoindex_ &&
   methods_ == other.methods_ &&
-  upload_dir_ == other.upload_dir_);
+  upload_dir_ == other.upload_dir_ &&
+  max_body_size_ == other.max_body_size_);
 }
 

@@ -15,7 +15,7 @@
 Cgi::Cgi(std::string cgi_bin_path) : cgi_bin_path_(std::move(cgi_bin_path)) {}
 
 // Operations
-Response Cgi::CreateResponse(Request &request) {
+Response Cgi::CreateResponse(Request &request, size_t max_body_size) {
   // Create args and envs
   char **args = this->CreateArgs();
   char **env = this->CreateEnv(request);
@@ -66,13 +66,10 @@ Response Cgi::CreateResponse(Request &request) {
   }
   std::string body = response_str.substr(response_str.find("\r\n\r\n") + 4);
   std::string content_length;
-  if (body.size() > 100000000)
-  {
-    content_length = std::string("content-length: ") + "100000000";
-    body.resize(100000000);
-  } else {
-    content_length = "content-length: " + std::to_string(body.size());
+  if (body.size() > max_body_size) {
+      return Response(Response::kPayloadTooLarge);
   }
+  content_length = "content-length: " + std::to_string(body.size());
 
   response_str = "HTTP/1.1" + response_str.substr(0, response_str.find("\r\n\r\n")) + "\r\n" + content_length + "\r\n\r\n" + body;
 
