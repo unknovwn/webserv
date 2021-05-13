@@ -24,13 +24,17 @@ ConfigParser::ConfigParser() {
   kLocationDirectiveHandlers["allowed_methods"]
     = &ConfigParser::AllowedMethodsHandler;
   kLocationDirectiveHandlers["autoindex"]
-    = &ConfigParser::AllowedMethodsHandler;
+    = &ConfigParser::AutoindexHandler;
   kLocationDirectiveHandlers["index"]
     = &ConfigParser::IndexHandler;
   kLocationDirectiveHandlers["root"]
     = &ConfigParser::RootHandler;
   kLocationDirectiveHandlers["save_directory"]
     = &ConfigParser::SaveDirectoryHandler;
+  kLocationDirectiveHandlers["cgi_extension"]
+    = &ConfigParser::CgiExtensionHandler;
+  kLocationDirectiveHandlers["cgi_path"]
+    = &ConfigParser::CgiPathHandler;
 }
 
 ConfigParser& ConfigParser::GetInstance() {
@@ -47,11 +51,6 @@ std::vector<Server> ConfigParser::ParseConfig(
   currToken_ = *tokensIt_;
 
   ParseRoot(servers);
-  for (const auto& server : servers) {
-    if (server.GetLocations().empty()) {
-      throw NoLocations();
-    }
-  }
   return servers;
 }
 
@@ -83,6 +82,9 @@ void ConfigParser::ParseServer(Server& server) {
     Expect(TokenType::kDirective);
     ParseServerDirective(server);
   }
+  if (server.GetLocations().empty()) {
+    throw NoLocations();
+  }
   NextToken();
 }
 
@@ -90,6 +92,9 @@ void ConfigParser::ParseLocation(Location& location) {
   while (currToken_.get_type() != TokenType::kCloseBlock) {
     Expect(TokenType::kDirective);
     ParseLocationDirective(location);
+  }
+  if (location.GetCgiExtension().empty() != location.GetCgiPath().empty()) {
+    throw InvalidCgiParameters();
   }
 }
 
@@ -144,6 +149,9 @@ void ConfigParser::ListenHandler(Server& server) {
 
   if (colonCount == 1) {
     auto tokens = split(address, ":");
+    if (tokens.size() != 2) {
+      throw InvalidArgument(address, currToken_.get_line_nb());
+    }
     host = tokens[0];
     port = ParsePort(tokens[1]);
   } else {
@@ -155,11 +163,37 @@ void ConfigParser::ListenHandler(Server& server) {
       port = 80;
     }
   }
+  if (host == "localhost") {
+    host = "127.0.0.1";
+  }
+  if (!isHostValid(host)) {
+    throw InvalidArgument(address, currToken_.get_line_nb());
+  }
   if (port == -1) {
     throw InvalidArgument(address, currToken_.get_line_nb());
   }
   listen << host << ":" << port;
   server.SetListen(listen.str());
+}
+
+bool ConfigParser::isHostValid(const std::string& host) {
+  auto anumbers = split(host, ".");
+
+  if (anumbers.size() != 4) {
+    return false;
+  }
+
+  for (const auto& anumber : anumbers) {
+    if (!contains_only_digits(anumber)
+        || (anumber.length() > 1 && anumber[0] == '0')) {
+      return false;
+    }
+    int inumber = std::stoi(anumber);
+    if (inumber > 255) {
+      return false;
+    }
+  }
+  return true;
 }
 
 int ConfigParser::ParsePort(const std::string& port) {
@@ -254,6 +288,14 @@ void ConfigParser::SaveDirectoryHandler(Location& location) {
   location.SetUploadDir(currToken_.get_value());
 }
 
+void ConfigParser::CgiExtensionHandler(Location& location) {
+  location.SetCgiExtension(currToken_.get_value());
+}
+
+void ConfigParser::CgiPathHandler(Location& location) {
+  location.SetCgiPath(currToken_.get_value());
+}
+
 
 ConfigParser::ConfigError::ConfigError(int line) : line_(line) {}
 
@@ -317,3 +359,10 @@ const std::string ConfigParser::IdenticalLocationPaths::what() const throw() {
   message << "Server locations have identical paths: " << path_;
   return message.str();
 }
+
+ConfigParser::InvalidCgiParameters::InvalidCgiParameters() : ConfigError(0) {}
+
+const std::string ConfigParser::InvalidCgiParameters::what() const throw() {
+  return "Invalid CGI parameters";
+}
+

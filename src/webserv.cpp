@@ -1,42 +1,88 @@
 #include <sys/socket.h>
+#include <sys/errno.h>
 #include <sys/select.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <sys/time.h>
 #include <cstring>
 #include <sstream>
 #include <iostream>
+#include <map>
 #include <fstream>
 #include <set>
+#include <utility>
 #include "lexer.hpp"
+#include "client.hpp"
 #include "config_parser.hpp"
+#include "utils_string.hpp"
+#include "cgi.hpp"
+#include "request.hpp"
 
-#define BUFFER_SIZE 1024
-#define PORT 8080
-#define MAX_CLIENTS 6
+#define BUFFER_SIZE 32768
+#define MAX_CLIENTS 1000
+#define CLIENT_LIFETIME 100000
 
-void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
-  std::ostringstream ss;
-  std::ostringstream body;
-  int count;
-  int select_ret;
-  char buffer[BUFFER_SIZE];
-  int client_sock[MAX_CLIENTS];
+const Server* find_server(const std::vector<Server>& servers,
+                          const Request& request) {
+  std::vector<const Server*> friendly;
+  size_t num_of_matches = 0;
+
+  for (const auto& cur : servers) {
+    if (request.GetIpPort() == cur.GetListen()) {
+      ++num_of_matches;
+      friendly.push_back(&cur);
+    }
+  }
+
+  for (const auto& cur : friendly) {
+    auto serv_names = cur->GetServerNames();
+    if (std::find(serv_names.begin(), serv_names.end(),
+          request.Find_GetH_Opt("Host")) != serv_names.end())
+      return cur;
+  }
+  return friendly.at(0);
+}
+
+void recieve(std::map<int,
+    std::pair<std::string, struct sockaddr_in> >& sock,
+    const std::vector<Server>& servers) {
+  int  count;
+  int  select_ret;
+  char buffer[BUFFER_SIZE + 1];
+  int  client_sock[MAX_CLIENTS];
   fd_set rfds;
-  int max_sd;
-  int sd;
-  int connected_sock;
+  std::map<int, Client> clients;
+  int  max_sd;
+  int  sd;
+  int  connected_sock;
+  int  addrlen = sizeof(struct sockaddr_in);
+  struct timeval timeout;
+
+  timeout.tv_sec = 5;
+  timeout.tv_usec = 0;
 
   for (int i = 0; i < MAX_CLIENTS; i++) {
     client_sock[i] = 0;
   }
   while (true) {
-    max_sd = sockfd;
+    max_sd = 0;
     FD_ZERO(&rfds);
-    FD_SET(sockfd, &rfds);
+    for (const auto& entry : sock) {
+      if (entry.first > max_sd) {
+        max_sd = entry.first;
+      }
+      FD_SET(entry.first, &rfds);
+    }
     for (int i = 0; i < MAX_CLIENTS; i++) {
       sd = client_sock[i];
       if (sd > 0) {
+        if (!clients[sd].Alive()) {
+          close(sd);
+          clients.erase(sd);
+          client_sock[i] = 0;
+          continue;
+        }
         FD_SET(sd, &rfds);
       }
       if (sd > max_sd) {
@@ -44,25 +90,33 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
       }
     }
 
-    select_ret = select(max_sd + 1, &rfds, NULL, NULL, NULL);
+    select_ret = select(max_sd + 1, &rfds, NULL, NULL, &timeout);
+
     if (select_ret == -1) {
       std::cerr << "Select error" << std::endl;
       exit(EXIT_FAILURE);
     }
 
-    if (FD_ISSET(sockfd, &rfds)) {
-      connected_sock = accept(sockfd,
-          reinterpret_cast<struct sockaddr*>(&address),
-          reinterpret_cast<socklen_t*>(&addrlen));
-      if (connected_sock == -1) {
-        std::cerr << "Accept error" << std::endl;
-        exit(EXIT_FAILURE);
-      }
+    if (select_ret == 0) {
+      continue;
+    }
 
-      for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (client_sock[i] == 0) {
-          client_sock[i] = connected_sock;
-          break;
+    for (auto& [sockfd, address] : sock) {
+      if (FD_ISSET(sockfd, &rfds)) {
+        connected_sock = accept(sockfd,
+            reinterpret_cast<struct sockaddr*>(&(address.second)),
+            reinterpret_cast<socklen_t*>(&addrlen));
+        if (connected_sock == -1) {
+          std::cerr << "Accept error" << std::endl;
+          exit(EXIT_FAILURE);
+        }
+
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+          if (client_sock[i] == 0) {
+            client_sock[i] = connected_sock;
+            clients[connected_sock] = Client(CLIENT_LIFETIME, address.first, sockfd);
+            break;
+          }
         }
       }
     }
@@ -74,92 +128,125 @@ void recieve(int sockfd, struct sockaddr_in address, int addrlen) {
           std::cerr << "Recv error" << std::endl;
           exit(EXIT_FAILURE);
         }
-        if (count < 1 || (count == 1 && buffer[0] == 4)) {
-          close(client_sock[i]);
-          client_sock[i] = 0;
-        } else {
+//        if (count == 0 || (count == 1 && buffer[0] == 4)) {
+//          close(client_sock[i]);
+//          client_sock[i] = 0;
+//          clients.erase(client_sock[i]);
+//        } else {
           buffer[count] = '\0';
-          std::cout << buffer;
+          Client& client = clients[client_sock[i]];
+          client.ResetTimer();
 
-          ss.str("");
-          ss.clear();
-          body.str("");
-          body.clear();
-          std::ifstream default_page("default_pages/default.html");
-          if (default_page) {
-            body << default_page.rdbuf();
-            default_page.close();
+          Request* request;
+          try {
+            do {
+              request = client.request_parser_.ParseRequest(buffer);
+              buffer[0] = '\0';
+              if (request) {
+                request->SetIpPort(sock[client.get_sockfd()].first);
+                const Server* server = find_server(servers, *request);
+                Response* response = server->CreateResponse(*request);
+                if (response->get_status_message() == "413 Payload Too Large") {
+                  std::cout << request->GetBody().length() << std::endl;
+                  std::cout << request->GetBody();
+                }
+                std::string response_str;
+                if (!response->GetCgiResponse().empty()) {
+                  response_str = response->GetCgiResponse();
+                } else {
+                  response_str = response->ToString();
+                }
+                send(client_sock[i], response_str.c_str(),
+                    response_str.length(), 0);
+                delete request;
+                delete response;
+              }
+            } while (!client.request_parser_.Empty());
+          } catch (RequestParser::BadRequest& e) {
+            std::unique_ptr<Response> response(
+                                            Server::CreateBadRequestResponse());
+            std::string response_str = response->ToString();
+            send(client_sock[i], response_str.c_str(),
+                response_str.length(), 0);
+            close(client_sock[i]);
+            client_sock[i] = 0;
+            clients.erase(client_sock[i]);
           }
-          ss << "HTTP/1.1 200 OK" << std::endl;
-          ss << "Content-Type: text/html" << std::endl;
-          ss << "Content-Length: " << body.str().length() << std::endl;
-          ss << std::endl;
-          ss << body.str();
-          send(client_sock[i], ss.str().c_str(), ss.str().length(), 0);
-        }
+//        }
       }
     }
   }
 }
 
 int main(int argc, char** argv) {
-  if (argc != 2) {
-    std::cerr << "Wrong number of arguments" << std::endl;
+  std::map<int, std::pair<std::string, struct sockaddr_in> > sock;
+  std::vector<Server>                                        servers;
+  std::set<std::string>                                      addresses;
+  std::string                                                config;
+
+  switch (argc) {
+    case 1:
+      config = "server.conf";
+      break;
+    case 2:
+      config = argv[1];
+      break;
+    default:
+      std::cerr << "Wrong number of arguments" << std::endl;
+      return 0;
   }
 
-  std::vector<Server> servers;
   try {
-    Lexer lexer(argv[1]);
-    servers = ConfigParser::GetInstance()
-      .ParseConfig(lexer.get_lexeme());
+    Lexer lexer(config);
+    servers = ConfigParser::GetInstance().ParseConfig(lexer.get_lexeme());
   } catch (Lexer::FileError& e) {
     std::cerr << e.what() << std::endl;
     return 0;
   } catch (ConfigParser::ConfigError& e) {
-    std::cerr << argv[1] << ":" << e.GetLine() << ": "
+    std::cerr << config << ":" << e.GetLine() << ": "
       << "\x1B[31merror: \033[0m" << e.what() << std::endl;
     return 0;
   }
 
-  std::set<std::string> addresses;
   for (const auto& server : servers) {
     addresses.insert(server.GetListen());
   }
-  std::cout << "Addresses:" << std::endl;
+
   for (const auto& address : addresses) {
-    std::cout << address << std::endl;
-  }
-  std::cout << "==============" << std::endl << std::endl;
+    std::vector<std::string> tokens = split(address, ":");
+    struct sockaddr_in       sockaddr;
+    int                      opt = 1;
+    int                      sockfd;
 
-  int opt = 1;
-  int sockfd;
-  struct sockaddr_in address;
-  int addrlen = sizeof(address);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd == -1) {
+      std::cerr << "Cannot create socket" << std::endl;
+      exit(EXIT_FAILURE);
+    }
 
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd == -1) {
-    std::cerr << "Cannot create socket" << std::endl;
-    exit(EXIT_FAILURE);
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+      std::cerr << "Setsockopt error" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_addr.s_addr = inet_addr(tokens[0].c_str());
+    sockaddr.sin_port = htons(std::stoi(tokens[1]));
+
+    if (bind(sockfd, reinterpret_cast<struct sockaddr*>(&sockaddr),
+          sizeof(sockaddr)) == -1) {
+      std::cerr << "Bind error" << std::endl;
+      std::cerr << address << std::endl;
+      std::cerr << strerror(errno) << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    if (listen(sockfd, MAX_CLIENTS) == -1) {
+      std::cerr << "Listen error" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    sock[sockfd] = std::make_pair(address, sockaddr);
   }
 
-  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
-    std::cerr << "Setsockopt error" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  address.sin_family = AF_INET;
-  address.sin_addr.s_addr = inet_addr("127.0.0.1");
-  address.sin_port = htons(PORT);
-
-  if (bind(sockfd, reinterpret_cast<struct sockaddr*>(&address),
-        addrlen) == -1) {
-    std::cerr << "Bind error" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  if (listen(sockfd, MAX_CLIENTS) == -1) {
-    std::cerr << "Listen error" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  recieve(sockfd, address, addrlen);
+  recieve(sock, servers);
 
   return 0;
 }

@@ -31,6 +31,7 @@ class ConfigParser {
   void ParseLocationDirective(Location& location);
 
   void ListenHandler(Server& server);
+  bool isHostValid(const std::string& host);
   int  ParsePort(const std::string& port);
   void ServerNameHandler(Server& server);
   void MaxBodySizeHandler(Server& server);
@@ -41,6 +42,8 @@ class ConfigParser {
   void IndexHandler(Location& location);
   void RootHandler(Location& location);
   void SaveDirectoryHandler(Location& location);
+  void CgiExtensionHandler(Location& location);
+  void CgiPathHandler(Location& location);
 
  public:
   class ConfigError {
@@ -95,6 +98,12 @@ class ConfigParser {
 
    public:
     IdenticalLocationPaths(const std::string& path, int line);
+    const std::string what() const throw() override;
+  };
+
+  class InvalidCgiParameters: public ConfigError {
+   public:
+    InvalidCgiParameters();
     const std::string what() const throw() override;
   };
 
