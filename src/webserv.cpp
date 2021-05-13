@@ -21,7 +21,7 @@
 
 #define BUFFER_SIZE 32768
 #define MAX_CLIENTS 1000
-#define CLIENT_LIFETIME 100000
+#define CLIENT_LIFETIME 300
 
 const Server* find_server(const std::vector<Server>& servers,
                           const Request& request) {
@@ -127,13 +127,8 @@ void recieve(std::map<int,
         count = recv(client_sock[i], buffer, BUFFER_SIZE, 0);
         if (count == -1) {
           std::cerr << "Recv error" << std::endl;
-          exit(EXIT_FAILURE);
+          continue;
         }
-//        if (count == 0 || (count == 1 && buffer[0] == 4)) {
-//          close(client_sock[i]);
-//          client_sock[i] = 0;
-//          clients.erase(client_sock[i]);
-//        } else {
           buffer[count] = '\0';
           Client& client = clients[client_sock[i]];
           client.ResetTimer();
@@ -169,7 +164,6 @@ void recieve(std::map<int,
             client_sock[i] = 0;
             clients.erase(client_sock[i]);
           }
-//        }
       }
     }
   }
@@ -183,7 +177,7 @@ int main(int argc, char** argv) {
 
   switch (argc) {
     case 1:
-      config = "server.conf";
+      config = "configs/serv.conf";
       break;
     case 2:
       config = argv[1];
