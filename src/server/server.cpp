@@ -13,17 +13,7 @@
 #include "cgi.hpp"
 
 bool print_dir(std::string& path, std::string& root);
-
-std::map
-        <std::string,
-        std::function<Response*(Request&, const std::string&,
-                                const Location*)> >
-                                               Server::response_from_methods = {
-        {"GET", Server::ResponseFromGet},
-        {"HEAD", Server::ResponseFromHead},
-        {"PUT", Server::ResponseFromPut},
-        {"POST", Server::ResponseFromPost}
-};
+std::string generate_error_page(int error_code);
 
 std::map<std::string, std::string> Server::content_types = {
         {".html", "text/html"},
@@ -136,30 +126,53 @@ Response* Server::CreateResponse(Request &request) const {
   if (location) {
     if (!location->GetMethods().empty() && !MethodIsAllowed(request,
                                                             *location)) {
-      // TODO(gdrive): error page
       std::cerr << absolute_path << ": method not allowed" << std::endl;
-      return new Response(Response::kMethodNotAllowed);
+      auto response = new Response(Response::kMethodNotAllowed);
+      response->AddToBody(GetErrorPageBody(Response::kMethodNotAllowed));
+      return response;
     }
     if (!location->GetRoot().empty()) {
       absolute_path = GetAbsolutePathFromLocation(request, *location);
     }
   }
-  auto response = response_from_methods[request.GetMethod()](request,
-                                                             absolute_path,
-                                                             location);
+  Response* response = nullptr;
+  auto method = request.GetMethod();
+  if (method == "GET") {
+    response = ResponseFromGet(request, absolute_path, location);
+  } else if (method == "POST") {
+    response = ResponseFromPost(request, absolute_path, location);
+  } else if (method == "PUT") {
+    response = ResponseFromPut(request, absolute_path, location);
+  } else if (method == "HEAD") {
+    response = ResponseFromHead(request, absolute_path, location);
+  }
 //  response->ResizeBody(GetMaxBodySize());
   return response;
 }
 
-Response* Server::CreateBadRequestResponse() {
-  return new Response(Response::kBadRequest);
+std::string Server::GetErrorPageBody(int status_code) const {
+  std::map<int, std::string>::const_iterator it
+    = error_pages_.find(status_code);
+  if (it != error_pages_.end()) {
+    try {
+      return FileToString((*it).second);
+    } catch (FileDoesNotExist& e) {}
+  }
+  return generate_error_page(status_code);
+}
+
+Response* Server::CreateBadRequestResponse() const {
+  auto response = new Response(Response::kBadRequest);
+  response->AddToBody(GetErrorPageBody(Response::kBadRequest));
+  return response;
 }
 
 // Response from methods
 Response* Server::ResponseFromGet([[maybe_unused]] Request &request,
                                   const std::string &path,
-                                  const Location *location = nullptr) {
-  if (location && (IsDir(path.c_str()) || (path.find(location->GetUri()) != std::string::npos))) {
+                                  const Location *location = nullptr) const {
+  if (location && (IsDir(path.c_str())
+        || (path.find(location->GetUri()) != std::string::npos))) {
     try {
       return ResponseFromLocationIndex(*location, path);
     } catch (FileDoesNotExist &e) {
@@ -167,8 +180,9 @@ Response* Server::ResponseFromGet([[maybe_unused]] Request &request,
         return ResponseFromAutoIndex(path, path);
       }
       std::cerr << e.what() << std::endl;
-      // TODO(gdrive): error page
-      return new Response(Response::kNotFound);
+      auto response = new Response(Response::kNotFound);
+      response->AddToBody(GetErrorPageBody(Response::kNotFound));
+      return response;
     }
   }
   std::string body;
@@ -177,8 +191,9 @@ Response* Server::ResponseFromGet([[maybe_unused]] Request &request,
     body.append((FileToString(path.c_str())));
   } catch (FileDoesNotExist & e) {
 //    std::cout << e.what() << std::endl;
-    // TODO(gdrive): error page
-    return new Response(Response::kNotFound);
+    auto response = new Response(Response::kNotFound);
+    response->AddToBody(GetErrorPageBody(Response::kNotFound));
+    return response;
   }
   auto response = new Response(Response::kOk);
 
@@ -189,7 +204,7 @@ Response* Server::ResponseFromGet([[maybe_unused]] Request &request,
 
 Response* Server::ResponseFromHead(Request &request,
                                    const std::string &path,
-                                   const Location *location = nullptr) {
+                                   const Location *location = nullptr) const {
   auto response = ResponseFromGet(request, path, location);
 
   response->ClearBody();
@@ -198,7 +213,7 @@ Response* Server::ResponseFromHead(Request &request,
 
 Response* Server::ResponseFromPut(Request &request,
                           const std::string &path,
-                          [[maybe_unused]] const Location *location = nullptr) {
+                          [[maybe_unused]] const Location *location = nullptr) const {
   struct stat   file_stat;
   Response      *response;
 
@@ -214,8 +229,9 @@ Response* Server::ResponseFromPut(Request &request,
   if (!file.is_open()) {
     std::cerr << path.c_str() <<  ": can't open/create " << std::endl;
     delete response;
-    // TODO(gdrive): error page
-    return new Response(Response::kForbidden);
+    auto response = new Response(Response::kForbidden);
+    response->AddToBody(GetErrorPageBody(Response::kForbidden));
+    return response;
   }
   // Response
 //  file.write(request.GetBody().c_str(), request.GetBody().length());
@@ -227,7 +243,7 @@ Response* Server::ResponseFromPut(Request &request,
 }
 
 Response *Server::ResponseFromPost(Request &request, const std::string &path,
-                                   const Location *location) {
+                                   const Location *location) const {
   size_t dot = path.rfind('.');
 
   if (!location || dot == std::string::npos ||

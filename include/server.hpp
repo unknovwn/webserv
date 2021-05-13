@@ -45,26 +45,22 @@ class Server {
 
   // Operations
   Response*        CreateResponse(Request &request) const;
-  static Response* CreateBadRequestResponse();
+  Response*        CreateBadRequestResponse() const;
+  std::string      GetErrorPageBody(int status_code) const;
 
  private:
   // Response from methods
-  static Response* ResponseFromGet([[maybe_unused]]Request &request,
+  Response* ResponseFromGet([[maybe_unused]]Request &request,
                                    const std::string &path,
-                                   const Location *location);
-  static Response* ResponseFromHead([[maybe_unused]]Request &request,
+                                   const Location *location) const;
+  Response* ResponseFromHead([[maybe_unused]]Request &request,
                                     const std::string &path,
-                                    const Location *location);
-  static Response* ResponseFromPut(Request &request,
+                                    const Location *location) const;
+  Response* ResponseFromPut(Request &request,
                                    const std::string &path,
-                                   [[maybe_unused]]const Location *location);
-  static Response* ResponseFromPost(Request &request, const std::string &path,
-                                    const Location *location);
-  // map["<method>"] = ResponseFrom<method>(...);
-  static std::map
-  <std::string,
-  std::function<Response*(Request&, const std::string&, const Location*)> >
-                                                          response_from_methods;
+                                   [[maybe_unused]]const Location *location) const;
+  Response* ResponseFromPost(Request &request, const std::string &path,
+                                    const Location *location) const;
 
   // Response Utils
   static Response    *ResponseFromLocationIndex(const Location &location,

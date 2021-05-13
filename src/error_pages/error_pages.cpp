@@ -1,25 +1,23 @@
 #include <iostream>
-#include <fstream>
+#include <sstream>
 #include <map>
 #include <vector>
 #include <unordered_map>
 
-void    generate_error_page(size_t error_code) {
-  std::ofstream out("error.html");
+std::string    generate_error_page(int error_code) {
+  std::ostringstream out;
   static const std::map<int, std::string> my = {
   {400, "Bad Request"},
   {403, "Forbidden"},
   {404, "Not Found"},
-  {405, "Method Not Allowed"},   // GET & HEAD cant be allowed
+  {405, "Method Not Allowed"},
   {410, "Gone"},
   {413, "Payload Too Large"},
   {500, "Internal Server Error"}};
 
   const auto i = my.find(error_code);
   if (i == my.end()) {
-    out.close();
-    std::remove("error.html");
-    return;
+    return "";
   }
   out << "<!DOCTYPE html>"                              << std::endl;
   out << "<html>"                                       << std::endl;
@@ -33,5 +31,5 @@ void    generate_error_page(size_t error_code) {
   out << "</div>"                                       << std::endl;
   out << "</body>"                                      << std::endl;
   out << "</html>"                                      << std::endl;
-  out.close();
+  return out.str();
 }

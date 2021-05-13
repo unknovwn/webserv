@@ -41,7 +41,6 @@ class Location {
   void                            SetCgiPath(const string& cgi_path);
   void                            SetMaxBodySize(size_t max_body_size);
   size_t                          GetMaxBodySize() const;
-  void                            Print() const;
 
   class Exception: public std::exception {   // пока не нужно, оставлю
    public:

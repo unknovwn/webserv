@@ -159,8 +159,8 @@ void recieve(std::map<int,
               }
             } while (!client.request_parser_.Empty());
           } catch (RequestParser::BadRequest& e) {
-            std::unique_ptr<Response> response(
-                                            Server::CreateBadRequestResponse());
+            std::unique_ptr<Response> response(servers[0]
+                .CreateBadRequestResponse());
             std::string response_str = response->ToString();
             send(client_sock[i], response_str.c_str(),
                 response_str.length(), 0);
