@@ -71,7 +71,9 @@ Response Cgi::CreateResponse(Request &request, size_t max_body_size) {
   }
   content_length = "content-length: " + std::to_string(body.size());
 
-  response_str = "HTTP/1.1" + response_str.substr(0, response_str.find("\r\n\r\n")) + "\r\n" + content_length + "\r\n\r\n" + body;
+  response_str = "HTTP/1.1"
+    + response_str.substr(0, response_str.find("\r\n\r\n"))
+    + "\r\n" + content_length + "\r\n\r\n" + body;
 
 
 
@@ -152,7 +154,7 @@ char **Cgi::CreateEnv(Request &request) const {
 
   // env[HTTP_HEADER_HEADER] = value --> [HTTP_HEADER_HEADER]=value
   char **env_result = static_cast<char**>(malloc(sizeof(char*)
-                                                 * (env.size() + headers.size() + 1)));
+        * (env.size() + headers.size() + 1)));
   if (!env_result) {
     throw Cgi::ResourceError();
   }

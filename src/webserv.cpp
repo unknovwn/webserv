@@ -114,7 +114,8 @@ void recieve(std::map<int,
         for (int i = 0; i < MAX_CLIENTS; i++) {
           if (client_sock[i] == 0) {
             client_sock[i] = connected_sock;
-            clients[connected_sock] = Client(CLIENT_LIFETIME, address.first, sockfd);
+            clients[connected_sock]
+              = Client(CLIENT_LIFETIME, address.first, sockfd);
             break;
           }
         }

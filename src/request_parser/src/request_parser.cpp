@@ -44,8 +44,7 @@ RequestParser::RequestParser(const RequestParser &other)
   content_length_(other.content_length_),
   state_(other.state_),
   expect_body_(other.expect_body_),
-  chunked_body_(other.chunked_body_)
-{
+  chunked_body_(other.chunked_body_) {
   handlers_ = {
           {State::kMethodState,          [&] {HandleMethod();}},
           {State::kPathState,            [&] {HandlePath();}},

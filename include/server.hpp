@@ -14,7 +14,6 @@ class Request;
 class Response;
 
 class Server {
-
  private:
   std::string                listen_;
   std::vector<std::string>   server_names_;
@@ -50,17 +49,14 @@ class Server {
 
  private:
   // Response from methods
-  Response* ResponseFromGet([[maybe_unused]]Request &request,
-                                   const std::string &path,
-                                   const Location *location) const;
-  Response* ResponseFromHead([[maybe_unused]]Request &request,
-                                    const std::string &path,
-                                    const Location *location) const;
-  Response* ResponseFromPut(Request &request,
-                                   const std::string &path,
-                                   [[maybe_unused]]const Location *location) const;
+  Response* ResponseFromGet(Request &request, const std::string &path,
+      const Location *location) const;
+  Response* ResponseFromHead(Request &request, const std::string &path,
+      const Location *location) const;
+  Response* ResponseFromPut(Request &request, const std::string &path,
+      const Location *location) const;
   Response* ResponseFromPost(Request &request, const std::string &path,
-                                    const Location *location) const;
+      const Location *location) const;
 
   // Response Utils
   static Response    *ResponseFromLocationIndex(const Location &location,
@@ -97,7 +93,6 @@ class Server {
     virtual const char* what() const throw();
   };
   class FileDoesNotExist {
-
    public:
     FileDoesNotExist() = delete;
     FileDoesNotExist(const std::string &file_name);

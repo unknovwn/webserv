@@ -54,14 +54,6 @@ const std::vector<string> &Server::GetServerNames() const {
   return server_names_;
 }
 
-//bool Server::FindServerName(string &name) {
-//  for (const auto &x : server_names_) {
-//    if (x == name)
-//      return true;
-//  }
-//  return false;
-//}
-
 void  Server::AddServerName(const string& name) {
   for (const auto &x : server_names_) {
     if (x == name)
@@ -74,23 +66,6 @@ const std::vector<Location> &Server::GetLocations() const {
   return this->routes_;
 }
 
-//const Location* Server::GetLocation(const string &uri) const {
-//  const Location *best_match = nullptr;
-//  size_t  depth;
-//  size_t  max_depth = 0;
-//
-//  for (const auto &x : routes_) {
-//    if (uri.starts_with(x.GetUri())) {
-//      depth = std::count(x.GetUri().begin(), x.GetUri().end(), '/');
-//      if (depth > max_depth) {
-//        max_depth = depth;
-//        best_match = &x;
-//      }
-//    }
-//  }
-//  return best_match;
-//}
-
 void Server::AddLocation(const Location &new_loc) {
   for (const auto &x : routes_) {
     if (x.GetUri() == new_loc.GetUri()) {
@@ -99,23 +74,6 @@ void Server::AddLocation(const Location &new_loc) {
   }
   routes_.push_back(new_loc);
 }
-//============================= PRINT =========================================
-//void Server::Print() const {
-//  std::cout << "listen: " << listen_ << std::endl;
-//  std::cout << "server_names: ";
-//  for (const auto &x : server_names_)
-//    std::cout << x;
-//  std::cout << std::endl;
-//  std::cout << "locations:" << std::endl;
-//  for (auto& route : routes_) {
-//    route.Print();
-//  }
-//  std::cout << "error_pages:" << std::endl;
-//  for (auto& error_page : error_pages_) {
-//    std::cout << error_page.first << ": " << error_page.second << std::endl;
-//  }
-//  std::cout << "max_body_size: " << max_body_size_ << std::endl;
-//}
 
 //============================= RESPONSE ======================================
 
@@ -202,18 +160,16 @@ Response* Server::ResponseFromGet([[maybe_unused]] Request &request,
   return response;
 }
 
-Response* Server::ResponseFromHead(Request &request,
-                                   const std::string &path,
-                                   const Location *location = nullptr) const {
+Response* Server::ResponseFromHead(Request &request, const std::string &path,
+    const Location *location = nullptr) const {
   auto response = ResponseFromGet(request, path, location);
 
   response->ClearBody();
   return response;
 }
 
-Response* Server::ResponseFromPut(Request &request,
-                          const std::string &path,
-                          [[maybe_unused]] const Location *location = nullptr) const {
+Response* Server::ResponseFromPut(Request &request, const std::string &path,
+    [[maybe_unused]] const Location *location = nullptr) const {
   struct stat   file_stat;
   Response      *response;
 
@@ -301,7 +257,7 @@ Response *Server::ResponseFromAutoIndex(std::string absolute_path,
   auto response = new Response(Response::kOk);
 
   response->AddToBody(FileToString("autoindex.html"));
-  response->AddHeader("Content-Length",std::to_string(
+  response->AddHeader("Content-Length", std::to_string(
           response->get_body().length()));
   response->AddHeader("Content-Type", "text/html");
   return response;
@@ -385,7 +341,7 @@ std::string Server::FileToString(const std::string &filename) {
   std::ifstream file(filename);
 
   if (!file.is_open()) {
-    throw (FileDoesNotExist(filename));
+    throw FileDoesNotExist(filename);
   }
   std::string   str((std::istreambuf_iterator<char>(file)),
                     std::istreambuf_iterator<char>());
