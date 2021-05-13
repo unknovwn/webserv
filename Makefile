@@ -6,9 +6,11 @@ SOURCE_FILES = webserv.cpp \
 			   location/location.cpp \
 			   server/server.cpp \
 			   response/src/response.cpp \
-				 cgi/src/cgi.cpp \
-				 cgi/src/datachannel.cpp \
-			   utils/string.cpp
+			   cgi/src/cgi.cpp \
+			   cgi/src/datachannel.cpp \
+			   utils/string.cpp \
+			   autoindex/autoindex.cpp \
+			   error_pages/error_pages.cpp
 
 SRC          = $(addprefix $(SRC_DIR), $(SOURCE_FILES))
 INCLD        = -Iinclude/ \
@@ -16,7 +18,7 @@ INCLD        = -Iinclude/ \
 			   -Isrc/request_parser/include \
 			   -Isrc/webserver_client/include \
 			   -Isrc/response/include \
-				 -Isrc/cgi/include/
+			   -Isrc/cgi/include/
 
 LIBS         = src/lexer/build/libwebserver_lexer_lib.a \
                src/webserver_client/build/libwebserver_client.a \
