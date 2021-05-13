@@ -234,9 +234,6 @@ void ConfigParser::ErrorPageHandler(Server& server) {
   NextToken();
   Expect(TokenType::kArgument);
   auto path = currToken_.get_value();
-  if (path[0] != '/') {
-    throw InvalidArgument(path, currToken_.get_line_nb());
-  }
   server.SetErrorPage(std::stoi(code), path);
 }
 
